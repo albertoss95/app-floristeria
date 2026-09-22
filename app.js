@@ -29,7 +29,37 @@ function ir(id) {
   document.getElementById(id).classList.add("activa");
   if (id === "pantalla-inicio") pintarInicio();
   if (id === "pantalla-flores") pintarFlores();
+  if (id === "pantalla-historico") pintarHistorico();
   window.scrollTo(0, 0);
+}
+
+/* ---------- HISTÓRICO ---------- */
+function fechaCorta(ts) {
+  const d = new Date(ts);
+  return `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}`;
+}
+function pintarHistorico() {
+  // centros montados (cuentas cerradas), el más reciente primero
+  const cuentas = leer("cuentas-cerradas", []).slice().reverse();
+  document.getElementById("historico-cuentas").innerHTML = cuentas.length
+    ? cuentas.map((c) => {
+        const t = totalCuenta(c.lineas);
+        const importe = (t.min || t.max) ? `≈ ${Math.round(t.min)}–${Math.round(t.max)} €` : "";
+        return `<div class="tarjeta-encargo hecho" style="opacity:1">
+          <div class="titulo">${c.presupuesto ? "Centro de " + c.presupuesto + " €" : "Centro"} ${importe ? "· " + importe : ""}</div>
+          <div class="sub">${fechaCorta(c.cerrada)} · ${c.lineas.map((l) => `${l.cantidad ?? "~"} ${l.articulo}`).join(", ")}</div>
+        </div>`;
+      }).join("")
+    : '<p class="vacio">Todavía ninguno.</p>';
+
+  // encargos ya hechos, el más reciente primero (los pendientes, aunque sean de
+  // fecha pasada, siguen en el inicio: un olvido no se archiva solo)
+  const pasados = encargos
+    .filter((e) => e.estado === "hecho")
+    .sort((a, b) => ((b.fecha || "") + b.creado > (a.fecha || "") + a.creado ? 1 : -1));
+  document.getElementById("historico-encargos").innerHTML = pasados.length
+    ? pasados.map(tarjetaEncargo).join("")
+    : '<p class="vacio">Todavía ninguno.</p>';
 }
 
 /* ---------- utilidades de fecha ---------- */

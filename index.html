@@ -21,6 +21,7 @@
 
   <h2>Encargos apuntados</h2>
   <div id="lista-encargos"></div>
+  <button class="btn-plano" onclick="ir('pantalla-historico')">ver histórico</button>
 </section>
 
 <!-- ============ APUNTAR ENCARGO (formulario) ============ -->
@@ -101,6 +102,15 @@
 
   <button id="btn-hablar" class="btn-hablar">🎤<br>MANTÉN PULSADO<br>Y HABLA</button>
   <div class="alt-teclado"><input id="cuenta-teclado" placeholder="o escríbelo: 3 hortensias y 5 rosas"><button onclick="dictadoTecleado()">→</button></div>
+</section>
+
+<!-- ============ HISTÓRICO ============ -->
+<section id="pantalla-historico" class="pantalla">
+  <header><button class="btn-icono" onclick="ir('pantalla-inicio')">←</button><h1>Histórico</h1></header>
+  <h2>Centros que has montado</h2>
+  <div id="historico-cuentas"></div>
+  <h2>Encargos pasados</h2>
+  <div id="historico-encargos"></div>
 </section>
 
 <!-- ============ FLORES (catálogo) ============ -->
