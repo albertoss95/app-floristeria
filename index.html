@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="theme-color" content="#2d7a4f">
+<title>La Floristería</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ============ INICIO ============ -->
+<section id="pantalla-inicio" class="pantalla activa">
+  <header><h1>🌸 La Floristería</h1><button class="btn-icono" onclick="ir('pantalla-flores')">⚙</button></header>
+
+  <button class="btn-gigante verde" onclick="nuevoEncargo()">✎ &nbsp;Apuntar encargo</button>
+  <button class="btn-gigante morado" onclick="nuevaCuenta()">✿ &nbsp;Cuenta del centro</button>
+
+  <div id="aviso-cuenta-abierta" class="aviso-cuenta oculto" onclick="reabrirCuenta()"></div>
+
+  <h2>Encargos apuntados</h2>
+  <div id="lista-encargos"></div>
+</section>
+
+<!-- ============ APUNTAR ENCARGO (formulario) ============ -->
+<section id="pantalla-encargo" class="pantalla">
+  <header><button class="btn-icono" onclick="ir('pantalla-inicio')">←</button><h1>Apuntar encargo</h1></header>
+
+  <label>Pega aquí el WhatsApp (o escribe lo que te han dicho)</label>
+  <textarea id="enc-texto" rows="3" placeholder="ej: centro de 50 para el jueves, calle Alcalá 128, para Carmen, sorpresa"></textarea>
+
+  <div class="fila-campos">
+    <div><label>Qué</label><input id="enc-que" placeholder="ramo, centro, corona…"></div>
+    <div><label>Cuánto (€)</label><input id="enc-importe" inputmode="decimal" placeholder="50"></div>
+  </div>
+  <div class="fila-campos">
+    <div><label>Para qué día</label><input id="enc-fecha" type="date"></div>
+    <div><label>Hora tope</label><input id="enc-hora" type="time"></div>
+  </div>
+  <div id="enc-fecha-larga" class="fecha-larga"></div>
+  <div class="fila-campos">
+    <div><label>¿Recoge o se lleva?</label>
+      <select id="enc-entrega"><option value="">— sin decidir —</option><option>Lo recogen</option><option>Se lleva a domicilio</option></select>
+    </div>
+    <div><label>¿Sorpresa?</label>
+      <select id="enc-sorpresa"><option value="">—</option><option>Sí</option><option>No</option></select>
+    </div>
+  </div>
+  <label>Dónde (si se lleva)</label><input id="enc-direccion" placeholder="calle, piso, tanatorio y sala…">
+  <label>Para quién / teléfono</label><input id="enc-quien" placeholder="Carmen · 655 44 33 22">
+  <label>Tarjeta / cinta</label><textarea id="enc-dedicatoria" rows="2" placeholder="el texto de la tarjeta o de la cinta"></textarea>
+  <label>Quién lo pide</label><input id="enc-cliente" placeholder="nombre o teléfono del cliente">
+
+  <button class="btn-gigante verde" onclick="guardarEncargo()">✓ &nbsp;Guardar</button>
+  <button class="btn-plano" onclick="ir('pantalla-inicio')">descartar</button>
+</section>
+
+<!-- ============ DETALLE DE ENCARGO ============ -->
+<section id="pantalla-detalle" class="pantalla">
+  <header><button class="btn-icono" onclick="ir('pantalla-inicio')">←</button><h1>Encargo</h1></header>
+  <div id="detalle-contenido"></div>
+  <button class="btn-gigante verde" id="btn-hecho" onclick="marcarHecho()">✓ &nbsp;Ya está hecho</button>
+  <button class="btn-gigante azul" onclick="imprimirTarjeta()">🖨 &nbsp;Tarjeta</button>
+  <button class="btn-plano" onclick="editarEncargo()">editar</button>
+  <button class="btn-plano rojo" onclick="borrarEncargo()">borrar</button>
+</section>
+
+<!-- ============ PRESUPUESTO DE LA CUENTA ============ -->
+<section id="pantalla-presupuesto" class="pantalla">
+  <header><button class="btn-icono" onclick="ir('pantalla-inicio')">←</button><h1>¿De cuánto es?</h1></header>
+  <div class="rejilla-presupuestos">
+    <button onclick="abrirCuenta(30)">30 €</button><button onclick="abrirCuenta(40)">40 €</button>
+    <button onclick="abrirCuenta(50)">50 €</button><button onclick="abrirCuenta(60)">60 €</button>
+    <button onclick="abrirCuenta(80)">80 €</button><button onclick="abrirCuenta(100)">100 €</button>
+  </div>
+  <label>Otro:</label>
+  <div class="fila-campos">
+    <input id="presu-otro" inputmode="numeric" placeholder="€">
+    <button class="btn-gigante morado" style="margin:0" onclick="abrirCuenta(parseFloat(document.getElementById('presu-otro').value)||null)">Vale</button>
+  </div>
+  <button class="btn-plano" onclick="abrirCuenta(null)">sin presupuesto, solo la lista</button>
+</section>
+
+<!-- ============ LA CUENTA DEL CENTRO ============ -->
+<section id="pantalla-cuenta" class="pantalla">
+  <header>
+    <button class="btn-icono" onclick="ir('pantalla-inicio')">←</button>
+    <h1 id="cuenta-titulo">Centro</h1>
+    <button class="btn-icono" onclick="cerrarCuenta()">✓ cerrar</button>
+  </header>
+
+  <div id="cuenta-barra" class="barra-presupuesto oculto">
+    <div id="cuenta-barra-relleno"></div><span id="cuenta-barra-texto"></span>
+  </div>
+
+  <h2>Llevas puesto</h2>
+  <div id="cuenta-lineas" class="cuenta-lineas"><p class="vacio">Nada todavía. Mantén pulsado el botón y di lo que metes.</p></div>
+
+  <div id="cuenta-respuesta" class="respuesta oculto"></div>
+
+  <button id="btn-hablar" class="btn-hablar">🎤<br>MANTÉN PULSADO<br>Y HABLA</button>
+  <div class="alt-teclado"><input id="cuenta-teclado" placeholder="o escríbelo: 3 hortensias y 5 rosas"><button onclick="dictadoTecleado()">→</button></div>
+</section>
+
+<!-- ============ FLORES (catálogo) ============ -->
+<section id="pantalla-flores" class="pantalla">
+  <header><button class="btn-icono" onclick="ir('pantalla-inicio')">←</button><h1>Tus flores</h1></header>
+  <p class="ayuda">El precio es lo que a ti te cuesta, más o menos (de–a). Sirve para la cuenta del centro. Se puede dejar vacío.</p>
+  <div id="lista-flores"></div>
+  <button class="btn-gigante verde" onclick="anadirFlor()">+ &nbsp;Añadir flor</button>
+  <button class="btn-plano" onclick="exportarTodo()">guardar copia de todo (descarga un fichero)</button>
+</section>
+
+<script src="parser.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
