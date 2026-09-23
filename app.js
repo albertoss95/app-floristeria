@@ -250,7 +250,7 @@ function pintarHistorico() {
         const t = totalCuenta(c.lineas);
         const importe = (t.min || t.max) ? `≈ ${Math.round(t.min)}–${Math.round(t.max)} €` : "";
         return `<div class="tarjeta-encargo hecho" style="opacity:1">
-          <div class="titulo">${esc(nombreTrabajo(c))}${c.presupuesto ? " de " + c.presupuesto + " €" : ""} ${importe ? "· " + importe : ""}</div>
+          <div class="titulo">${esc(nombreTrabajo(c))}${c.presupuesto ? " de " + c.presupuesto + " €" : " sin presupuesto"} ${importe ? "· " + importe : ""}</div>
           <div class="sub">${fechaCorta(c.cerrada)} · ${esc(c.lineas.map((l) => `${l.cantidad ?? "~"} ${l.articulo}`).join(", "))}</div>
         </div>`;
       }).join("")
@@ -292,7 +292,7 @@ function pintarInicio() {
   const aviso = document.getElementById("aviso-cuenta-abierta");
   if (cuenta) {
     const min = Math.round((Date.now() - cuenta.abierta) / 60000);
-    aviso.textContent = `▲ A medias: ${nombreTrabajo(cuenta).toLowerCase()}${cuenta.presupuesto ? ` de ${cuenta.presupuesto} €` : ""} · hace ${min < 60 ? min + " min" : Math.round(min / 60) + " h"} · toca para seguir`;
+    aviso.textContent = `▲ A medias: ${nombreTrabajo(cuenta).toLowerCase()}${cuenta.presupuesto ? ` de ${cuenta.presupuesto} €` : " sin presupuesto"} · hace ${min < 60 ? min + " min" : Math.round(min / 60) + " h"} · toca para seguir`;
     aviso.classList.remove("oculto");
   } else aviso.classList.add("oculto");
 
@@ -464,6 +464,11 @@ function imprimirTarjeta() {
   let zona = document.getElementById("zona-impresion");
   if (!zona) { zona = document.createElement("div"); zona.id = "zona-impresion"; document.body.appendChild(zona); }
   zona.textContent = texto;
+  // iPhone con la app instalada en pantalla de inicio: la hoja de imprimir puede no abrirse.
+  // [CONFIRMAR en el iPhone de la hermana]; si falla, que la abra desde Safari.
+  if (navigator.standalone === true) {
+    alert("Si no se abre la hoja de imprimir, abre la app desde Safari (no desde el icono) y vuelve a darle a Tarjeta.");
+  }
   window.print();
 }
 
@@ -476,7 +481,7 @@ function pintarTipos() {
   document.getElementById("tipos-trabajo").innerHTML = TIPOS_TRABAJO.map((t) =>
     `<button class="chip ${tipoElegido === t ? "on" : ""}" onclick="tipoElegido = tipoElegido === '${t}' ? null : '${t}'; pintarTipos()">${t}</button>`).join("");
 }
-const nombreTrabajo = (c) => c.tipo ? c.tipo[0].toUpperCase() + c.tipo.slice(1) : "Presupuesto";
+const nombreTrabajo = (c) => (c.tipo && c.tipo !== "otro") ? Array.from(c.tipo)[0].toUpperCase() + Array.from(c.tipo).slice(1).join("") : "Presupuesto";
 function nuevaCuenta() {
   if (cuenta) { reabrirCuenta(); return; }
   tipoElegido = null; pintarTipos();
@@ -533,7 +538,7 @@ function lineasConPrecios() {
   });
 }
 function pintarCuenta() {
-  document.getElementById("cuenta-titulo").innerHTML = `<span class="tipo" onclick="event.stopPropagation();cambiarTipo()">${esc(nombreTrabajo(cuenta))}</span> · ${cuenta.presupuesto ? `${cuenta.presupuesto} €` : "sin tope"} <span class="editar">✎</span>`;
+  document.getElementById("cuenta-titulo").innerHTML = `<span class="tipo" onclick="event.stopPropagation();cambiarTipo()">${esc(nombreTrabajo(cuenta))}</span> · ${cuenta.presupuesto ? `${cuenta.presupuesto} €` : "sin presupuesto"} <span class="editar">✎</span>`;
   const lineas = lineasConPrecios();
   const t = totalCuenta(lineas);
   const nTotal = lineas.reduce((s, l) => s + (l.cantidad ?? 0), 0);

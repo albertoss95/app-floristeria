@@ -3,10 +3,13 @@
 // (y se actualiza la caché); sin red, se sirve lo último que se cacheó.
 // Subir el número de versión en cada despliegue fuerza la limpieza de cachés viejas.
 const CACHE = "floristeria-v11";
-const FICHEROS = ["./", "./index.html", "./styles.css", "./app.js", "./parser.js", "./manifest.json", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
+const FICHEROS = ["./", "./index.html", "./styles.css", "./app.js", "./parser.js", "./manifest.json"];
+// Los iconos no hacen falta sin cobertura (el sistema los copia al instalar): se cachean aparte
+// y sin que un fallo suyo impida activar la version nueva.
+const OPCIONALES = ["./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FICHEROS)));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FICHEROS).then(() => Promise.allSettled(OPCIONALES.map((f) => c.add(f))))));
   self.skipWaiting();
 });
 
