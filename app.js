@@ -99,14 +99,29 @@ let editandoId = null;
 let detalleId = null;
 
 /* ---------- navegación ---------- */
+// Pantallas de primer nivel: tienen barra inferior y en ellas es seguro recargar
+// para instalar una versión nueva (no hay nada a medio escribir).
+const PRINCIPALES = ["pantalla-inicio", "pantalla-flores", "pantalla-historico", "pantalla-ajustes"];
 function ir(id) {
+  if (PRINCIPALES.includes(id) && actualizacionPendiente) { location.reload(); return; }
   document.querySelectorAll(".pantalla").forEach((p) => p.classList.remove("activa"));
   document.getElementById(id).classList.add("activa");
+  const barra = document.getElementById("barra");
+  barra.classList.toggle("oculto", !PRINCIPALES.includes(id));
+  barra.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.p === id));
   if (id === "pantalla-inicio") pintarInicio();
   if (id === "pantalla-flores") pintarFlores();
   if (id === "pantalla-historico") pintarHistorico();
   if (id === "pantalla-tirar") pintarTirar();
+  if (id === "pantalla-ajustes") pintarAjustes();
   window.scrollTo(0, 0);
+}
+// Atajo: desde una línea "sin precio" (cuenta, histórico) a Tus flores con la búsqueda hecha.
+function irAFlor(nombre) {
+  grupoActivo = "todas";
+  ir("pantalla-flores");
+  const b = document.getElementById("buscar-flor"); b.value = nombre; pintarFlores();
+  setTimeout(() => document.querySelector("#lista-flores input.precio")?.focus(), 80);
 }
 
 /* ---------- SE TIRA (instrumento, no función: convierte la merma en euros) ---------- */
@@ -193,7 +208,7 @@ function pintarHistoricoTirado() {
     const porFlor = new Map();
     for (const t of items) porFlor.set(t.nombre, (porFlor.get(t.nombre) || 0) + t.cantidad);
     const top = [...porFlor.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([nom, c]) => `${c} ${nom}`).join(", ");
-    const sinPrecio = total.sinPrecio ? ` · ${total.sinPrecio} sin precio en Tus flores` : "";
+    const sinPrecio = total.sinPrecio ? ` · <a href="#" onclick="ir('pantalla-flores');return false">${total.sinPrecio} sin precio en Tus flores</a>` : "";
     return `<div class="tarjeta-encargo hecho" style="opacity:1">
       <div class="titulo">${MESES[parseInt(m, 10) - 1]} ${y} · ${n} tirados ${textoEuros(total) ? "· " + textoEuros(total) : ""}</div>
       <div class="sub">${top}${sinPrecio}</div>
@@ -427,7 +442,7 @@ function pintarCuenta() {
     cont.innerHTML = '<p class="vacio">Nada todavía. Mantén pulsado el botón y di lo que metes.</p>';
   } else {
     cont.innerHTML = lineas.map((l, i) =>
-      `<div class="linea"><span class="cant">${l.cantidad ?? "~"}</span><span class="arti">${l.articulo}${l.unidad ? " (" + l.unidad + ")" : ""}${l.precioMin == null ? ' <span class="sinprecio">sin precio</span>' : ""}</span><button onclick="quitarLinea(${i})">✕</button></div>`
+      `<div class="linea"><span class="cant">${l.cantidad ?? "~"}</span><span class="arti">${l.articulo}${l.unidad ? " (" + l.unidad + ")" : ""}${l.precioMin == null ? ` <span class="sinprecio" onclick="irAFlor('${(l.articulo || "").replace(/'/g, "")}')">sin precio · ponerlo</span>` : ""}</span><button onclick="quitarLinea(${i})">✕</button></div>`
     ).join("");
   }
   // barra
@@ -561,24 +576,58 @@ function exportarTodo() {
   a.click();
 }
 
-/* ---------- service worker (funciona sin cobertura) ---------- */
+/* ---------- versión y novedades ---------- */
+// Subir VERSION en cada despliegue y contar en NOVEDADES qué cambia, en las palabras de
+// Belén: es lo que verá en el aviso al abrir la app tras actualizarse.
+const VERSION = "2026-09-23.6";
+const NOVEDADES = {
+  "2026-09-23.6": "Barra de abajo para ir a Inicio, Flores, Histórico y Ajustes. Las actualizaciones se instalan solas y te avisan. En la cuenta, toca \"sin precio\" para ponérselo a una flor.",
+  "2026-09-23.5": "Botón \"se tira algo\" en el inicio: apunta lo que tiras en dos toques y el histórico te dice cuánto dinero se ha ido al mes.",
+  "2026-09-23.4": "Buscador y secciones en Tus flores.",
+};
+function pintarAjustes() {
+  document.getElementById("version").textContent = VERSION;
+  document.getElementById("ajustes-novedades").textContent = NOVEDADES[VERSION] || "";
+}
+// Al abrir con una versión distinta de la última vista → aviso en el inicio con lo nuevo.
+document.addEventListener("DOMContentLoaded", () => {
+  // La versión "vista" se guarda al CERRAR el aviso, no al cargar: justo tras un despliegue
+  // la app se recarga dos veces (la segunda la provoca el service worker nuevo) y si se
+  // guardara al cargar, el aviso desaparecería antes de que nadie lo viera.
+  const vista = leer("version-vista", null);
+  if (!vista) guardar("version-vista", VERSION); // primera instalación: nada que anunciar
+  else if (vista !== VERSION) {
+    const av = document.getElementById("aviso-novedades");
+    av.innerHTML = `<b>✓ App actualizada</b><br>${NOVEDADES[VERSION] || "Pequeños arreglos."}<br><small>toca para cerrar</small>`;
+    av.classList.remove("oculto");
+  }
+  pintarAjustes();
+  document.querySelector('#barra button[data-p="pantalla-inicio"]').classList.add("on");
+});
+
+/* ---------- service worker: funciona sin cobertura y se actualiza solo ---------- */
+// Cuando el navegador detecta un sw.js nuevo, este toma el control al instante (skipWaiting).
+// Entonces: si Belén está en una pantalla principal, recargamos ya; si está a medias
+// (dictando un centro, rellenando un encargo), no le cortamos: aviso discreto y se instala
+// al volver al inicio. Además comprobamos si hay versión nueva cada vez que la app vuelve
+// al frente y cada 20 min, porque una PWA instalada puede pasar días sin "abrirse".
+let actualizacionPendiente = false;
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").then((reg) => {
-    // si hay versión nueva, recargar una vez para que se vea sin que Belén haga nada
     reg.addEventListener("updatefound", () => {
       const nuevo = reg.installing;
       nuevo?.addEventListener("statechange", () => {
-        if (nuevo.state === "activated" && navigator.serviceWorker.controller) location.reload();
+        if (nuevo.state !== "activated" || !navigator.serviceWorker.controller) return;
+        const activa = document.querySelector(".pantalla.activa")?.id;
+        if (PRINCIPALES.includes(activa)) location.reload();
+        else { actualizacionPendiente = true; document.getElementById("aviso-actualizacion").classList.remove("oculto"); }
       });
     });
+    const comprobar = () => reg.update().catch(() => {});
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") comprobar(); });
+    setInterval(comprobar, 20 * 60 * 1000);
   }).catch(() => {});
 }
-
-/* ---------- versión visible (para saber qué tiene instalado cada móvil) ---------- */
-const VERSION = "2026-09-23.5";
-document.addEventListener("DOMContentLoaded", () => {
-  const v = document.getElementById("version"); if (v) v.textContent = "v " + VERSION;
-});
 
 async function forzarActualizacion() {
   if ("serviceWorker" in navigator) {

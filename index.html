@@ -12,7 +12,8 @@
 
 <!-- ============ INICIO ============ -->
 <section id="pantalla-inicio" class="pantalla activa">
-  <header><h1>🌸 La Floristería</h1><button class="btn-icono" onclick="ir('pantalla-flores')">⚙</button></header>
+  <header><h1>🌸 La Floristería</h1></header>
+  <div id="aviso-novedades" class="aviso-novedades oculto" onclick="this.classList.add('oculto');guardar('version-vista',VERSION)"></div>
 
   <button class="btn-gigante verde" onclick="nuevoEncargo()"><span class="icono">✎</span><span>Apuntar encargo<small>WhatsApp, teléfono o mostrador</small></span></button>
   <button class="btn-gigante morado" onclick="nuevaCuenta()"><span class="icono">✿</span><span>Calcular centro<small>di lo que metes y lleva la cuenta</small></span></button>
@@ -21,10 +22,7 @@
 
   <h2>Encargos apuntados</h2>
   <div id="lista-encargos"></div>
-  <div class="fila-planos">
-    <button class="btn-plano" onclick="ir('pantalla-historico')">ver histórico</button>
-    <button class="btn-plano" onclick="abrirTirar()">🗑 se tira algo</button>
-  </div>
+  <button class="btn-plano" onclick="abrirTirar()">🗑 se tira algo</button>
 </section>
 
 <!-- ============ SE TIRA (instrumento: lo que se va a la basura) ============ -->
@@ -120,7 +118,7 @@
 
 <!-- ============ HISTÓRICO ============ -->
 <section id="pantalla-historico" class="pantalla">
-  <header><button class="btn-icono" onclick="ir('pantalla-inicio')">←</button><h1>Histórico</h1></header>
+  <header><h1>🕓 Histórico</h1></header>
   <h2>Centros que has montado</h2>
   <div id="historico-cuentas"></div>
   <h2>Encargos pasados</h2>
@@ -131,15 +129,35 @@
 
 <!-- ============ FLORES (catálogo) ============ -->
 <section id="pantalla-flores" class="pantalla">
-  <header><button class="btn-icono" onclick="ir('pantalla-inicio')">←</button><h1>Tus flores</h1></header>
+  <header><h1>🌸 Tus flores</h1></header>
   <p class="ayuda">El precio es lo que a ti te cuesta cada tallo, más o menos (de–a). Sirve para calcular el centro. Se puede dejar vacío.</p>
   <input id="buscar-flor" type="search" placeholder="🔍 buscar flor…" oninput="pintarFlores()" autocomplete="off">
   <div id="grupos-flores" class="chips"></div>
   <div id="lista-flores"></div>
   <button class="btn-gigante verde" onclick="anadirFlor()">+ &nbsp;Añadir flor</button>
-  <button class="btn-plano" onclick="exportarTodo()">guardar copia de todo (descarga un fichero)</button>
-  <p class="ayuda" style="text-align:center;margin-top:24px"><span id="version"></span> · <a href="#" onclick="forzarActualizacion();return false" style="color:inherit">buscar actualización</a></p>
 </section>
+
+<!-- ============ AJUSTES ============ -->
+<section id="pantalla-ajustes" class="pantalla">
+  <header><h1>Ajustes</h1></header>
+  <div class="tarjeta-encargo hecho" style="opacity:1">
+    <div class="titulo">Versión <span id="version"></span></div>
+    <div class="sub" id="ajustes-novedades"></div>
+  </div>
+  <p class="ayuda">Las actualizaciones se instalan solas cuando abres la app. Si crees que te falta algo, fuerza una aquí.</p>
+  <button class="btn-gigante azul" onclick="forzarActualizacion()">⟳ &nbsp;Buscar actualización</button>
+  <p class="ayuda">Todo lo que apuntas vive solo en este móvil. Guarda una copia de vez en cuando por si lo cambias o lo pierdes.</p>
+  <button class="btn-gigante verde" onclick="exportarTodo()">⬇ &nbsp;Guardar copia de todo</button>
+</section>
+
+<!-- ============ BARRA INFERIOR ============ -->
+<nav id="barra" class="barra-inferior">
+  <button data-p="pantalla-inicio" onclick="ir('pantalla-inicio')"><span>🏠</span>Inicio</button>
+  <button data-p="pantalla-flores" onclick="ir('pantalla-flores')"><span>🌸</span>Flores</button>
+  <button data-p="pantalla-historico" onclick="ir('pantalla-historico')"><span>🕓</span>Histórico</button>
+  <button data-p="pantalla-ajustes" onclick="ir('pantalla-ajustes')"><span>⚙</span>Ajustes</button>
+</nav>
+<div id="aviso-actualizacion" class="aviso-actualizacion oculto" onclick="location.reload()">Hay una versión nueva · toca para instalarla</div>
 
 <script src="parser.js"></script>
 <script src="app.js"></script>
