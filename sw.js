@@ -2,7 +2,7 @@
 // Estrategia "red primero, caché de respaldo": con red se sirve la versión más reciente
 // (y se actualiza la caché); sin red, se sirve lo último que se cacheó.
 // Subir el número de versión en cada despliegue fuerza la limpieza de cachés viejas.
-const CACHE = "floristeria-v8";
+const CACHE = "floristeria-v9";
 const FICHEROS = ["./", "./index.html", "./styles.css", "./app.js", "./parser.js", "./manifest.json"];
 
 self.addEventListener("install", (e) => {

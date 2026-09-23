@@ -178,6 +178,28 @@ caso("C20", "C07 completo: 'la base de siempre' no se traga la espuma",
   return e;
 });
 
+// --- regresiones señaladas por semantic_reviewer (23/09) ---
+caso("C21", "'quitame una X' sigue funcionando (regresion de \\s*)", "quítame una rosa roja", ESTADO_3, (r) => {
+  const e = [];
+  if (linea(r, "rosa roja")?.cantidad !== 4) e.push(`rosa roja = ${linea(r, "rosa roja")?.cantidad}, esperaba 4`);
+  if ((r.lineas || []).length !== 3) e.push("ha tocado otra linea");
+  return e;
+});
+caso("C22", "'tres mas de eucalipto' sin eucalipto en la cuenta -> anade 3", "tres mas de eucalipto", ESTADO_3, (r) => {
+  const e = [];
+  const eu = linea(r, "eucalipto");
+  if (!eu || eu.cantidad !== 3) e.push(`eucalipto = ${eu?.cantidad}, esperaba 3`);
+  if ((r.lineas || []).some((l) => l.florId == null)) e.push("linea fantasma");
+  return e;
+});
+caso("C23", "coma pegada al teclear: 'dos rosas rojas,las hortensias fuera'", "dos rosas rojas,quita las hortensias", ESTADO_3, (r) => {
+  const e = [];
+  if (linea(r, "rosa roja")?.cantidad !== 7) e.push("rosa roja != 7");
+  if (linea(r, "hortensia")) e.push("hortensia sigue");
+  if ((r.lineas || []).some((l) => l.florId == null)) e.push("linea fantasma");
+  return e;
+});
+
 // total
 const t = totalCuenta(ESTADO_BASE);
 if (t.min === 12.8 && t.max === 21.2) { pasan++; console.log("PASA  T01 total con rangos"); }

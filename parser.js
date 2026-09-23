@@ -136,7 +136,7 @@ function procesarDictado(frase, lineas, catalogo) {
     .replace(/\b(no espera|espera|pon|ponme|mete|meto|anade|anado|apunta|apunto|he puesto|puse|vale|eh|em|pues|venga|a ver|que no me pegan?|de siempre|otras?|otros?)\b/g, " ")
     .replace(/\bmas\b(?!\s+de\b)/g, " ")
     .replace(/(^|\s|,)no(\s|,|$)/g, "$1 $2")
-    .replace(/(^|\s)(?<!de\s)(la|el|las|los)\s+(?!de\b)/g, "$1")
+    .replace(/(^|\s|,)(?<!de\s)(la|el|las|los)\s+(?!de\b)/g, "$1")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -155,7 +155,7 @@ function procesarDictado(frase, lineas, catalogo) {
 
     // QUITAR: "quita las hortensias", "quita una rosa", "fuera el eucalipto", "quita una"
     // OJO: solo se descartan los articulos la/las/el/los; "una/un" es una cantidad.
-    const mQuitar = trozo.match(/^(?:quita|quitame|fuera|saca|elimina|borra)\s*(?:la |las |el |los )?(.*)$/);
+    const mQuitar = trozo.match(/^(?:quitame|quita|fuera|saca|elimina|borra)(?:\s+|$)(?:la |las |el |los )?(.*)$/);
     if (mQuitar) {
       const { cantidad, resto } = leerCantidad(mQuitar[1].split(" ").filter(Boolean));
       let linea = null;
@@ -202,7 +202,7 @@ function procesarDictado(frase, lineas, catalogo) {
     }
 
     // "dos mas de las blancas" -> ambiguedad si varias lineas casan por raiz ("blanc-")
-    const mMasDe = trozo.match(/^(.+?)\s+mas\s+de\s+(?:la|las|los|el)\s+(.+)$/) ||
+    const mMasDe = trozo.match(/^(.+?)\s+mas\s+de\s+(?:(?:la|las|los|el)\s+)?(.+)$/) ||
                    trozo.match(/^(.+?)\s+de\s+(?:la|las|los|el)\s+(.+)$/);
     if (mMasDe && !casarFlor(trozo.split(" "), catalogo)) {
       const { cantidad } = leerCantidad(mMasDe[1].split(" "));
@@ -222,6 +222,21 @@ function procesarDictado(frase, lineas, catalogo) {
         ultimaTocada = candidatas[0];
         cambio = true;
         continue;
+      }
+      // "tres mas de eucalipto" sin nada parecido en la cuenta: es un anadir normal
+      if (!candidatas.length && cantidad != null) {
+        const casa = casarFlor(mMasDe[2].split(" "), catalogo);
+        if (casa) {
+          const u = casa.flor.unidad || null;
+          const existente = resultado.find((l) => l.florId === casa.flor.id && l.unidad === u);
+          if (existente) { existente.cantidad = (existente.cantidad ?? 0) + cantidad; ultimaTocada = existente; }
+          else {
+            const nueva = { cantidad, unidad: u, articulo: casa.flor.nombre, florId: casa.flor.id, precioMin: casa.flor.precioMin ?? null, precioMax: casa.flor.precioMax ?? null };
+            resultado.push(nueva); ultimaTocada = nueva;
+          }
+          cambio = true;
+          continue;
+        }
       }
     }
 
