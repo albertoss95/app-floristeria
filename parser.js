@@ -75,6 +75,13 @@ function casarFlor(palabras, catalogo) {
   return mejor;
 }
 
+// ¿En la posicion i empieza una cantidad? (para saber donde acaba un articulo desconocido)
+function empiezaCantidad(palabras, i) {
+  const p = palabras[i], s = palabras[i + 1];
+  return /^\d+$/.test(p) || NUMEROS[p] != null || p === "docena" || p === "par" ||
+    (p === "media" && s === "docena") || ((p === "un" || p === "una") && (s === "par" || s === "poco" || s === "pizca" || s === "docena"));
+}
+
 // Extrae [cantidad, unidad, resto] del principio de un trozo
 function leerCantidad(palabras) {
   let cantidad = null, unidad = null, i = 0, indeterminado = false;
@@ -218,14 +225,20 @@ function procesarDictado(frase, lineas, catalogo) {
         cambio = true;
         palabras = resto.slice(casa.consumidas); // sigue con lo que quede del trozo
       } else {
-        // fuera de catalogo: se apunta lo que queda del trozo, sin precio
+        // fuera de catalogo: el articulo desconocido llega SOLO hasta donde empieza
+        // la siguiente cantidad ("5 rosas 3 hortensias" son dos lineas, no una)
+        let corte = resto.length;
+        for (let j = 1; j < resto.length; j++) {
+          if (empiezaCantidad(resto, j)) { corte = j; break; }
+        }
+        const articulo = resto.slice(0, corte).join(" ");
         resultado.push({
           cantidad: indeterminado ? null : cantidad, unidad: unidad || null,
-          articulo: resto.join(" "), florId: null, precioMin: null, precioMax: null,
+          articulo, florId: null, precioMin: null, precioMax: null,
         });
-        avisos.push(`"${resto.join(" ")}" no está en tus flores: apuntado sin precio.`);
+        avisos.push(`"${articulo}" no está en tus flores: apuntado sin precio.`);
         cambio = true;
-        break;
+        palabras = resto.slice(corte);
       }
     }
   }

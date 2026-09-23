@@ -116,6 +116,24 @@ caso("C12", "frase vacia/ruido", "", ESTADO_BASE, (r) => {
   return r.accion === "ignorar" ? [] : [`accion = ${r.accion}`];
 });
 
+// bug real de Alber (23/09): sin comas y con flores fuera de catalogo, salia una sola linea
+caso("C13", "dictado seguido sin conectores, con desconocidas", "5 rosas 3 hortensias 6 girasoles",
+  [], (r) => {
+  const e = [];
+  if ((r.lineas || []).length !== 3) e.push(`${(r.lineas || []).length} lineas, esperaba 3`);
+  const rosas = (r.lineas || []).find((l) => l.articulo.includes("rosa"));
+  if (!rosas || rosas.cantidad !== 5) e.push("rosas != 5");
+  if (linea(r, "hortensia")?.cantidad !== 3) e.push("hortensias != 3");
+  if (linea(r, "girasol")?.cantidad !== 6) e.push("girasoles != 6");
+  return e;
+});
+// misma estructura, todas desconocidas
+caso("C14", "varias desconocidas seguidas", "dos proteas cuatro anturios", [], (r) => {
+  const e = [];
+  if ((r.lineas || []).length !== 2) e.push(`${(r.lineas || []).length} lineas, esperaba 2`);
+  return e;
+});
+
 // total
 const t = totalCuenta(ESTADO_BASE);
 if (t.min === 12.8 && t.max === 21.2) { pasan++; console.log("PASA  T01 total con rangos"); }

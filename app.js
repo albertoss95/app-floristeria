@@ -9,6 +9,8 @@ let encargos = leer("encargos", []);
 let catalogo = leer("catalogo", [
   { id: 1, nombre: "rosa roja", alias: [], precioMin: null, precioMax: null },
   { id: 2, nombre: "rosa blanca", alias: [], precioMin: null, precioMax: null },
+  { id: 12, nombre: "rosa", alias: [], precioMin: null, precioMax: null },
+  { id: 13, nombre: "girasol", alias: [], precioMin: null, precioMax: null },
   { id: 3, nombre: "hortensia", alias: ["ortensia", "hortencia"], precioMin: null, precioMax: null },
   { id: 4, nombre: "clavel", alias: ["claveles"], precioMin: null, precioMax: null },
   { id: 5, nombre: "lilium", alias: [], precioMin: null, precioMax: null },
