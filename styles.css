@@ -187,3 +187,14 @@ input:focus, textarea:focus, select:focus {
     display: flex !important; align-items: center; justify-content: center;
   }
 }
+
+/* ---------- buscador y chips de grupo (Tus flores) ---------- */
+#buscar-flor { margin: 6px 0 10px; border-radius: 14px; box-shadow: var(--sombra); font-size: 1.05rem; }
+.chips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 10px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  flex-shrink: 0; padding: 8px 14px; border-radius: 99px; border: 1.5px solid var(--borde);
+  background: var(--crema-tarjeta); color: var(--tinta-suave); font-size: .88rem; font-weight: 700; white-space: nowrap;
+}
+.chip.on { background: var(--verde); border-color: var(--verde); color: #fff; }
+.flor-fila .guion { color: #b9b9ad; font-weight: 700; }

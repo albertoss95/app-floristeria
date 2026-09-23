@@ -14,68 +14,84 @@ let encargos = leer("encargos", []);
 // Día de la Madre la rosa puede doblar o triplicar.
 const CATALOGO_POR_DEFECTO = [
   // rosas
-  { id: 1,  nombre: "rosa",              alias: ["rosas"],                          precioMin: 0.9, precioMax: 1.8 },
-  { id: 2,  nombre: "rosa roja",         alias: [],                                 precioMin: 1.0, precioMax: 2.0 },
-  { id: 3,  nombre: "rosa blanca",       alias: [],                                 precioMin: 0.9, precioMax: 1.8 },
-  { id: 4,  nombre: "rosa rosa",         alias: ["rosa rosada"],                    precioMin: 0.9, precioMax: 1.8 },
-  { id: 5,  nombre: "rosa ramificada",   alias: ["rosa spray", "rosa pitiminí", "pitimini"], precioMin: 1.5, precioMax: 2.5 },
+  { id: 1,  nombre: "rosa", grupo: "rosas",              alias: ["rosas"],                          precioMin: 0.9, precioMax: 1.8 },
+  { id: 2,  nombre: "rosa roja", grupo: "rosas",         alias: [],                                 precioMin: 1.0, precioMax: 2.0 },
+  { id: 3,  nombre: "rosa blanca", grupo: "rosas",       alias: [],                                 precioMin: 0.9, precioMax: 1.8 },
+  { id: 4,  nombre: "rosa rosa", grupo: "rosas",         alias: ["rosa rosada"],                    precioMin: 0.9, precioMax: 1.8 },
+  { id: 5,  nombre: "rosa ramificada", grupo: "rosas",   alias: ["rosa spray", "rosa pitiminí", "pitimini"], precioMin: 1.5, precioMax: 2.5 },
   // flor de foco
-  { id: 6,  nombre: "hortensia",         alias: ["ortensia", "hortencia", "urtencia"], precioMin: 3.0, precioMax: 6.0 },
-  { id: 7,  nombre: "peonía",            alias: ["peonia", "peonias"],              precioMin: 3.0, precioMax: 6.0 },
-  { id: 8,  nombre: "lilium",            alias: ["lilio", "lirio", "liliums"],      precioMin: 1.8, precioMax: 3.5 },
-  { id: 9,  nombre: "gerbera",           alias: ["gerberas"],                       precioMin: 0.7, precioMax: 1.3 },
-  { id: 10, nombre: "girasol",           alias: ["girasoles"],                      precioMin: 1.2, precioMax: 2.2 },
-  { id: 11, nombre: "tulipán",           alias: ["tulipan", "tulipanes", "tulipans"], precioMin: 0.6, precioMax: 1.2 },
-  { id: 12, nombre: "anémona",           alias: ["anemona", "anemonas"],            precioMin: 1.2, precioMax: 2.2 },
-  { id: 13, nombre: "ranúnculo",         alias: ["ranunculo", "ranunculos"],        precioMin: 1.5, precioMax: 3.0 },
-  { id: 14, nombre: "fresia",            alias: ["freesia", "fresias"],             precioMin: 0.7, precioMax: 1.3 },
-  { id: 15, nombre: "lisianthus",        alias: ["lisiantus", "lisianto"],          precioMin: 1.2, precioMax: 2.2 },
-  { id: 16, nombre: "alstroemeria",      alias: ["astromelia", "alstromeria", "astromelias"], precioMin: 0.6, precioMax: 1.2 },
-  { id: 17, nombre: "orquídea",          alias: ["orquidea", "orquideas", "cymbidium"], precioMin: 3.0, precioMax: 7.0 },
-  { id: 18, nombre: "anturio",           alias: ["anthurium", "anturios"],          precioMin: 2.0, precioMax: 4.0 },
-  { id: 19, nombre: "dalia",             alias: ["dalias"],                         precioMin: 1.5, precioMax: 3.0 },
-  { id: 20, nombre: "protea",            alias: ["proteas"],                        precioMin: 3.5, precioMax: 7.0 },
+  { id: 6,  nombre: "hortensia", grupo: "flor de foco",         alias: ["ortensia", "hortencia", "urtencia"], precioMin: 3.0, precioMax: 6.0 },
+  { id: 7,  nombre: "peonía", grupo: "flor de foco",            alias: ["peonia", "peonias"],              precioMin: 3.0, precioMax: 6.0 },
+  { id: 8,  nombre: "lilium", grupo: "flor de foco",            alias: ["lilio", "lirio", "liliums"],      precioMin: 1.8, precioMax: 3.5 },
+  { id: 9,  nombre: "gerbera", grupo: "flor de foco",           alias: ["gerberas"],                       precioMin: 0.7, precioMax: 1.3 },
+  { id: 10, nombre: "girasol", grupo: "flor de foco",           alias: ["girasoles"],                      precioMin: 1.2, precioMax: 2.2 },
+  { id: 11, nombre: "tulipán", grupo: "flor de foco",           alias: ["tulipan", "tulipanes", "tulipans"], precioMin: 0.6, precioMax: 1.2 },
+  { id: 12, nombre: "anémona", grupo: "flor de foco",           alias: ["anemona", "anemonas"],            precioMin: 1.2, precioMax: 2.2 },
+  { id: 13, nombre: "ranúnculo", grupo: "flor de foco",         alias: ["ranunculo", "ranunculos"],        precioMin: 1.5, precioMax: 3.0 },
+  { id: 14, nombre: "fresia", grupo: "flor de foco",            alias: ["freesia", "fresias"],             precioMin: 0.7, precioMax: 1.3 },
+  { id: 15, nombre: "lisianthus", grupo: "flor de foco",        alias: ["lisiantus", "lisianto"],          precioMin: 1.2, precioMax: 2.2 },
+  { id: 16, nombre: "alstroemeria", grupo: "flor de foco",      alias: ["astromelia", "alstromeria", "astromelias"], precioMin: 0.6, precioMax: 1.2 },
+  { id: 17, nombre: "orquídea", grupo: "flor de foco",          alias: ["orquidea", "orquideas", "cymbidium"], precioMin: 3.0, precioMax: 7.0 },
+  { id: 18, nombre: "anturio", grupo: "flor de foco",           alias: ["anthurium", "anturios"],          precioMin: 2.0, precioMax: 4.0 },
+  { id: 19, nombre: "dalia", grupo: "flor de foco",             alias: ["dalias"],                         precioMin: 1.5, precioMax: 3.0 },
+  { id: 20, nombre: "protea", grupo: "flor de foco",            alias: ["proteas"],                        precioMin: 3.5, precioMax: 7.0 },
   // clavel y crisantemo (funeral, cementerio, básicos)
-  { id: 21, nombre: "clavel",            alias: ["claveles"],                       precioMin: 0.3, precioMax: 0.6 },
-  { id: 22, nombre: "clavel blanco",     alias: [],                                 precioMin: 0.3, precioMax: 0.6 },
-  { id: 23, nombre: "clavelina",         alias: ["clavelinas", "mini clavel"],      precioMin: 0.4, precioMax: 0.8 },
-  { id: 24, nombre: "crisantemo",        alias: ["crisantemos", "margarita"],       precioMin: 0.8, precioMax: 1.6 },
-  { id: 25, nombre: "gladiolo",          alias: ["gladiolos"],                      precioMin: 0.8, precioMax: 1.5 },
-  { id: 26, nombre: "calla",             alias: ["cala", "calas", "callas"],        precioMin: 1.5, precioMax: 3.0 },
-  { id: 27, nombre: "delphinium",        alias: ["delfinium", "espuela"],           precioMin: 1.5, precioMax: 2.5 },
-  { id: 28, nombre: "antirrhinum",       alias: ["boca de dragon", "dragonaria"],   precioMin: 1.0, precioMax: 1.8 },
+  { id: 21, nombre: "clavel", grupo: "clavel y funeral",            alias: ["claveles"],                       precioMin: 0.3, precioMax: 0.6 },
+  { id: 22, nombre: "clavel blanco", grupo: "clavel y funeral",     alias: [],                                 precioMin: 0.3, precioMax: 0.6 },
+  { id: 23, nombre: "clavelina", grupo: "clavel y funeral",         alias: ["clavelinas", "mini clavel"],      precioMin: 0.4, precioMax: 0.8 },
+  { id: 24, nombre: "crisantemo", grupo: "clavel y funeral",        alias: ["crisantemos", "margarita"],       precioMin: 0.8, precioMax: 1.6 },
+  { id: 25, nombre: "gladiolo", grupo: "clavel y funeral",          alias: ["gladiolos"],                      precioMin: 0.8, precioMax: 1.5 },
+  { id: 26, nombre: "calla", grupo: "clavel y funeral",             alias: ["cala", "calas", "callas"],        precioMin: 1.5, precioMax: 3.0 },
+  { id: 27, nombre: "delphinium", grupo: "clavel y funeral",        alias: ["delfinium", "espuela"],           precioMin: 1.5, precioMax: 2.5 },
+  { id: 28, nombre: "antirrhinum", grupo: "clavel y funeral",       alias: ["boca de dragon", "dragonaria"],   precioMin: 1.0, precioMax: 1.8 },
   // relleno
-  { id: 29, nombre: "paniculata",        alias: ["gypsophila", "gipsofila", "velo de novia"], precioMin: 1.5, precioMax: 3.0 },
-  { id: 30, nombre: "limonium",          alias: ["limonio", "estatice", "statice"], precioMin: 1.0, precioMax: 2.0 },
-  { id: 31, nombre: "solidago",          alias: [],                                 precioMin: 0.8, precioMax: 1.5 },
-  { id: 32, nombre: "lavanda",           alias: [],                                 unidad: "manojo", precioMin: 2.0, precioMax: 4.0 },
-  { id: 33, nombre: "wax",               alias: ["waxflower", "flor de cera"],      precioMin: 1.2, precioMax: 2.2 },
+  { id: 29, nombre: "paniculata", grupo: "relleno",        alias: ["gypsophila", "gipsofila", "velo de novia"], precioMin: 1.5, precioMax: 3.0 },
+  { id: 30, nombre: "limonium", grupo: "relleno",          alias: ["limonio", "estatice", "statice"], precioMin: 1.0, precioMax: 2.0 },
+  { id: 31, nombre: "solidago", grupo: "relleno",          alias: [],                                 precioMin: 0.8, precioMax: 1.5 },
+  { id: 32, nombre: "lavanda", grupo: "relleno",           alias: [],                                 unidad: "manojo", precioMin: 2.0, precioMax: 4.0 },
+  { id: 33, nombre: "wax", grupo: "relleno",               alias: ["waxflower", "flor de cera"],      precioMin: 1.2, precioMax: 2.2 },
   // verdes (suelen ir por manojo o rama)
-  { id: 34, nombre: "eucalipto",         alias: ["eucaliptus"],                     unidad: "manojo", precioMin: 2.0, precioMax: 4.0 },
-  { id: 35, nombre: "ruscus",            alias: ["rusco"],                          unidad: "manojo", precioMin: 1.5, precioMax: 3.0 },
-  { id: 36, nombre: "aspidistra",        alias: ["aspidistras"],                    precioMin: 0.5, precioMax: 1.0 },
-  { id: 37, nombre: "helecho",           alias: ["helechos", "esparraguera"],       unidad: "manojo", precioMin: 1.5, precioMax: 3.0 },
-  { id: 38, nombre: "monstera",          alias: ["hoja de monstera"],               precioMin: 1.0, precioMax: 2.0 },
-  { id: 39, nombre: "pistacho",          alias: ["lentisco", "pistacia"],           unidad: "manojo", precioMin: 2.0, precioMax: 3.5 },
-  { id: 40, nombre: "beargrass",         alias: ["bear grass"],                     unidad: "manojo", precioMin: 1.5, precioMax: 3.0 },
+  { id: 34, nombre: "eucalipto", grupo: "verdes",         alias: ["eucaliptus"],                     unidad: "manojo", precioMin: 2.0, precioMax: 4.0 },
+  { id: 35, nombre: "ruscus", grupo: "verdes",            alias: ["rusco"],                          unidad: "manojo", precioMin: 1.5, precioMax: 3.0 },
+  { id: 36, nombre: "aspidistra", grupo: "verdes",        alias: ["aspidistras"],                    precioMin: 0.5, precioMax: 1.0 },
+  { id: 37, nombre: "helecho", grupo: "verdes",           alias: ["helechos", "esparraguera"],       unidad: "manojo", precioMin: 1.5, precioMax: 3.0 },
+  { id: 38, nombre: "monstera", grupo: "verdes",          alias: ["hoja de monstera"],               precioMin: 1.0, precioMax: 2.0 },
+  { id: 39, nombre: "pistacho", grupo: "verdes",          alias: ["lentisco", "pistacia"],           unidad: "manojo", precioMin: 2.0, precioMax: 3.5 },
+  { id: 40, nombre: "beargrass", grupo: "verdes",         alias: ["bear grass"],                     unidad: "manojo", precioMin: 1.5, precioMax: 3.0 },
   // materiales
-  { id: 41, nombre: "espuma",            alias: ["oasis", "esponja"],               precioMin: 1.2, precioMax: 2.5 },
-  { id: 42, nombre: "base",              alias: ["base de centro", "recipiente", "cuenco"], precioMin: 2.0, precioMax: 6.0 },
-  { id: 43, nombre: "cinta",             alias: ["cinta de raso", "lazo"],          unidad: "metro", precioMin: 0.3, precioMax: 0.8 },
-  { id: 44, nombre: "papel",             alias: ["papel de envolver", "celofán", "celofan"], precioMin: 0.5, precioMax: 1.5 },
-  { id: 45, nombre: "alambre",           alias: ["alambres"],                       precioMin: 0.1, precioMax: 0.3 },
+  { id: 41, nombre: "espuma", grupo: "materiales",            alias: ["oasis", "esponja"],               precioMin: 1.2, precioMax: 2.5 },
+  { id: 42, nombre: "base", grupo: "materiales",              alias: ["base de centro", "recipiente", "cuenco"], precioMin: 2.0, precioMax: 6.0 },
+  { id: 43, nombre: "cinta", grupo: "materiales",             alias: ["cinta de raso", "lazo"],          unidad: "metro", precioMin: 0.3, precioMax: 0.8 },
+  { id: 44, nombre: "papel", grupo: "materiales",             alias: ["papel de envolver", "celofán", "celofan"], precioMin: 0.5, precioMax: 1.5 },
+  { id: 45, nombre: "alambre", grupo: "materiales",           alias: ["alambres"],                       precioMin: 0.1, precioMax: 0.3 },
 ];
 let catalogo = leer("catalogo", CATALOGO_POR_DEFECTO);
 
 // Si Belén ya tiene catálogo guardado de una versión anterior, le añadimos las flores
-// nuevas que no tenga (por nombre), sin tocar las suyas ni sus precios.
+// nuevas que no tenga (por nombre) y el grupo a las que ya tenía, sin tocar sus precios.
 (function completarCatalogo() {
-  const tengo = new Set(catalogo.map((f) => f.nombre));
-  let anadidas = 0;
-  for (const f of CATALOGO_POR_DEFECTO) {
-    if (!tengo.has(f.nombre)) { catalogo.push({ ...f, id: Date.now() + anadidas }); anadidas++; }
+  const porNombre = new Map(CATALOGO_POR_DEFECTO.map((f) => [f.nombre, f]));
+  let cambios = 0;
+  for (const f of catalogo) {
+    const ref = porNombre.get(f.nombre);
+    if (!f.grupo) { f.grupo = ref ? ref.grupo : "mías"; cambios++; }
+    if (ref) {
+      // une alias: los suyos + los nuevos que no tuviera
+      const suyos = new Set(f.alias || []);
+      const nuevos = ref.alias.filter((a) => !suyos.has(a));
+      if (nuevos.length) { f.alias = [...(f.alias || []), ...nuevos]; cambios++; }
+      if (!f.unidad && ref.unidad) { f.unidad = ref.unidad; cambios++; }
+      // si no tenía precio, coge el orientativo; si ya puso uno, ni tocarlo
+      if (f.precioMin == null && f.precioMax == null && ref.precioMin != null) {
+        f.precioMin = ref.precioMin; f.precioMax = ref.precioMax; cambios++;
+      }
+    }
   }
-  if (anadidas) guardar("catalogo", catalogo);
+  const tengo = new Set(catalogo.map((f) => f.nombre));
+  for (const f of CATALOGO_POR_DEFECTO) {
+    if (!tengo.has(f.nombre)) { catalogo.push({ ...f, id: Date.now() + cambios }); cambios++; }
+  }
+  if (cambios) guardar("catalogo", catalogo);
 })();
 let cuenta = leer("cuenta-abierta", null); // {presupuesto, lineas, abierta}
 let editandoId = null;
@@ -393,20 +409,52 @@ function dictadoTecleado() {
 })();
 
 /* ---------- FLORES ---------- */
+const GRUPOS = ["rosas", "flor de foco", "clavel y funeral", "relleno", "verdes", "materiales", "mías"];
+let grupoActivo = "todas";
+
 function pintarFlores() {
-  document.getElementById("lista-flores").innerHTML = catalogo.map((f, i) =>
-    `<div class="flor-fila">
-      <input class="nombre" value="${f.nombre}" onchange="catalogo[${i}].nombre=this.value;guardar('catalogo',catalogo)">
+  const q = normalizar(document.getElementById("buscar-flor")?.value || "");
+  // chips de grupo (solo los que tienen algo)
+  const presentes = GRUPOS.filter((g) => catalogo.some((f) => (f.grupo || "mías") === g));
+  document.getElementById("grupos-flores").innerHTML =
+    [`<button class="chip ${grupoActivo === "todas" ? "on" : ""}" onclick="grupoActivo='todas';pintarFlores()">todas</button>`]
+      .concat(presentes.map((g) => `<button class="chip ${grupoActivo === g ? "on" : ""}" onclick="grupoActivo='${g}';pintarFlores()">${g}</button>`))
+      .join("");
+
+  const orden = (f) => GRUPOS.indexOf(f.grupo || "mías");
+  const visibles = catalogo
+    .map((f, i) => ({ f, i }))
+    .sort((a, b) => orden(a.f) - orden(b.f) || a.f.nombre.localeCompare(b.f.nombre, "es"))
+    .filter(({ f }) => grupoActivo === "todas" || (f.grupo || "mías") === grupoActivo)
+    .filter(({ f }) => !q || normalizar(f.nombre).includes(q) || (f.alias || []).some((a) => normalizar(a).includes(q)));
+
+  if (!visibles.length) {
+    document.getElementById("lista-flores").innerHTML = `<p class="vacio">Nada con "${q}". Puedes añadirla abajo.</p>`;
+    return;
+  }
+  // agrupadas con cabecera cuando se ven "todas" sin búsqueda
+  let html = "", ultimo = null;
+  for (const { f, i } of visibles) {
+    const g = f.grupo || "mías";
+    if (grupoActivo === "todas" && !q && g !== ultimo) { html += `<div class="dia-cabecera">${g}</div>`; ultimo = g; }
+    html += `<div class="flor-fila">
+      <input class="nombre" value="${f.nombre}" onchange="catalogo[${i}].nombre=this.value.toLowerCase().trim();guardar('catalogo',catalogo)">
       <input class="precio" inputmode="decimal" placeholder="de" value="${f.precioMin ?? ""}" onchange="catalogo[${i}].precioMin=parseFloat(this.value)||null;guardar('catalogo',catalogo)">
+      <span class="guion">–</span>
       <input class="precio" inputmode="decimal" placeholder="a" value="${f.precioMax ?? ""}" onchange="catalogo[${i}].precioMax=parseFloat(this.value)||null;guardar('catalogo',catalogo)">
-      <button onclick="catalogo.splice(${i},1);guardar('catalogo',catalogo);pintarFlores()">✕</button>
-    </div>`).join("");
+      <button onclick="if(confirm('¿Quitar ${f.nombre}?')){catalogo.splice(${i},1);guardar('catalogo',catalogo);pintarFlores()}">✕</button>
+    </div>`;
+  }
+  document.getElementById("lista-flores").innerHTML = html;
 }
 function anadirFlor() {
-  const nombre = prompt("Nombre de la flor:");
+  const q = document.getElementById("buscar-flor")?.value.trim();
+  const nombre = prompt("Nombre de la flor:", q || "");
   if (!nombre) return;
-  catalogo.push({ id: Date.now(), nombre: nombre.toLowerCase().trim(), alias: [], precioMin: null, precioMax: null });
-  guardar("catalogo", catalogo); pintarFlores();
+  catalogo.push({ id: Date.now(), nombre: nombre.toLowerCase().trim(), alias: [], grupo: "mías", precioMin: null, precioMax: null });
+  guardar("catalogo", catalogo);
+  document.getElementById("buscar-flor").value = ""; grupoActivo = "todas";
+  pintarFlores();
 }
 function exportarTodo() {
   const datos = { encargos, catalogo, cuentasCerradas: leer("cuentas-cerradas", []), exportado: new Date().toISOString() };
@@ -431,7 +479,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* ---------- versión visible (para saber qué tiene instalado cada móvil) ---------- */
-const VERSION = "2026-09-23.3";
+const VERSION = "2026-09-23.4";
 document.addEventListener("DOMContentLoaded", () => {
   const v = document.getElementById("version"); if (v) v.textContent = "v " + VERSION;
 });
