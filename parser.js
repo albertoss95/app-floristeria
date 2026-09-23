@@ -126,9 +126,12 @@ function procesarDictado(frase, lineas, catalogo) {
   const avisos = [];
   let cambio = false;
 
-  // limpia muletillas ANTES de trocear (para que "no espera quita una" quede "quita una")
+  // limpia muletillas ANTES de trocear (para que "no espera quita una" quede "quita una").
+  // Los articulos "la/el/las/los" solo se quitan cuando NO van detras de "de" (para no
+  // romper "dos mas de las blancas", que necesita el "las" para detectar la ambiguedad).
   const limpio = norm
     .replace(/\b(no espera|espera|pon|ponme|mete|meto|anade|anado|apunta|apunto|he puesto|puse|vale|eh|em|pues|venga|a ver|que no me pegan?)\b/g, " ")
+    .replace(/(^|\s)(?<!de\s)(la|el|las|los)\s+(?!de\b)/g, "$1")
     .replace(/\s+/g, " ")
     .trim();
 

@@ -6,21 +6,77 @@ const guardar = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 const leer = (k, def) => { try { return JSON.parse(localStorage.getItem(k)) ?? def; } catch { return def; } };
 
 let encargos = leer("encargos", []);
-let catalogo = leer("catalogo", [
-  { id: 1, nombre: "rosa roja", alias: [], precioMin: null, precioMax: null },
-  { id: 2, nombre: "rosa blanca", alias: [], precioMin: null, precioMax: null },
-  { id: 12, nombre: "rosa", alias: [], precioMin: null, precioMax: null },
-  { id: 13, nombre: "girasol", alias: [], precioMin: null, precioMax: null },
-  { id: 3, nombre: "hortensia", alias: ["ortensia", "hortencia"], precioMin: null, precioMax: null },
-  { id: 4, nombre: "clavel", alias: ["claveles"], precioMin: null, precioMax: null },
-  { id: 5, nombre: "lilium", alias: [], precioMin: null, precioMax: null },
-  { id: 6, nombre: "gerbera", alias: [], precioMin: null, precioMax: null },
-  { id: 7, nombre: "paniculata", alias: ["gypsophila"], precioMin: null, precioMax: null },
-  { id: 8, nombre: "eucalipto", alias: [], unidad: "manojo", precioMin: null, precioMax: null },
-  { id: 9, nombre: "ruscus", alias: [], precioMin: null, precioMax: null },
-  { id: 10, nombre: "espuma", alias: [], precioMin: null, precioMax: null },
-  { id: 11, nombre: "cinta", alias: ["cinta de raso"], unidad: "metro", precioMin: null, precioMax: null },
-]);
+
+// Catálogo por defecto: flores habituales de una floristería de barrio en Madrid.
+// Precio = coste aproximado POR TALLO para la florista (rango de-a, en €), fuera de
+// campaña. ORIENTATIVO: sale de catálogos de mayoristas y precios de mercado de 2026,
+// no de un albarán real. Belén lo corrige desde "Tus flores". En San Valentín o el
+// Día de la Madre la rosa puede doblar o triplicar.
+const CATALOGO_POR_DEFECTO = [
+  // rosas
+  { id: 1,  nombre: "rosa",              alias: ["rosas"],                          precioMin: 0.9, precioMax: 1.8 },
+  { id: 2,  nombre: "rosa roja",         alias: [],                                 precioMin: 1.0, precioMax: 2.0 },
+  { id: 3,  nombre: "rosa blanca",       alias: [],                                 precioMin: 0.9, precioMax: 1.8 },
+  { id: 4,  nombre: "rosa rosa",         alias: ["rosa rosada"],                    precioMin: 0.9, precioMax: 1.8 },
+  { id: 5,  nombre: "rosa ramificada",   alias: ["rosa spray", "rosa pitiminí", "pitimini"], precioMin: 1.5, precioMax: 2.5 },
+  // flor de foco
+  { id: 6,  nombre: "hortensia",         alias: ["ortensia", "hortencia", "urtencia"], precioMin: 3.0, precioMax: 6.0 },
+  { id: 7,  nombre: "peonía",            alias: ["peonia", "peonias"],              precioMin: 3.0, precioMax: 6.0 },
+  { id: 8,  nombre: "lilium",            alias: ["lilio", "lirio", "liliums"],      precioMin: 1.8, precioMax: 3.5 },
+  { id: 9,  nombre: "gerbera",           alias: ["gerberas"],                       precioMin: 0.7, precioMax: 1.3 },
+  { id: 10, nombre: "girasol",           alias: ["girasoles"],                      precioMin: 1.2, precioMax: 2.2 },
+  { id: 11, nombre: "tulipán",           alias: ["tulipan", "tulipanes", "tulipans"], precioMin: 0.6, precioMax: 1.2 },
+  { id: 12, nombre: "anémona",           alias: ["anemona", "anemonas"],            precioMin: 1.2, precioMax: 2.2 },
+  { id: 13, nombre: "ranúnculo",         alias: ["ranunculo", "ranunculos"],        precioMin: 1.5, precioMax: 3.0 },
+  { id: 14, nombre: "fresia",            alias: ["freesia", "fresias"],             precioMin: 0.7, precioMax: 1.3 },
+  { id: 15, nombre: "lisianthus",        alias: ["lisiantus", "lisianto"],          precioMin: 1.2, precioMax: 2.2 },
+  { id: 16, nombre: "alstroemeria",      alias: ["astromelia", "alstromeria", "astromelias"], precioMin: 0.6, precioMax: 1.2 },
+  { id: 17, nombre: "orquídea",          alias: ["orquidea", "orquideas", "cymbidium"], precioMin: 3.0, precioMax: 7.0 },
+  { id: 18, nombre: "anturio",           alias: ["anthurium", "anturios"],          precioMin: 2.0, precioMax: 4.0 },
+  { id: 19, nombre: "dalia",             alias: ["dalias"],                         precioMin: 1.5, precioMax: 3.0 },
+  { id: 20, nombre: "protea",            alias: ["proteas"],                        precioMin: 3.5, precioMax: 7.0 },
+  // clavel y crisantemo (funeral, cementerio, básicos)
+  { id: 21, nombre: "clavel",            alias: ["claveles"],                       precioMin: 0.3, precioMax: 0.6 },
+  { id: 22, nombre: "clavel blanco",     alias: [],                                 precioMin: 0.3, precioMax: 0.6 },
+  { id: 23, nombre: "clavelina",         alias: ["clavelinas", "mini clavel"],      precioMin: 0.4, precioMax: 0.8 },
+  { id: 24, nombre: "crisantemo",        alias: ["crisantemos", "margarita"],       precioMin: 0.8, precioMax: 1.6 },
+  { id: 25, nombre: "gladiolo",          alias: ["gladiolos"],                      precioMin: 0.8, precioMax: 1.5 },
+  { id: 26, nombre: "calla",             alias: ["cala", "calas", "callas"],        precioMin: 1.5, precioMax: 3.0 },
+  { id: 27, nombre: "delphinium",        alias: ["delfinium", "espuela"],           precioMin: 1.5, precioMax: 2.5 },
+  { id: 28, nombre: "antirrhinum",       alias: ["boca de dragon", "dragonaria"],   precioMin: 1.0, precioMax: 1.8 },
+  // relleno
+  { id: 29, nombre: "paniculata",        alias: ["gypsophila", "gipsofila", "velo de novia"], precioMin: 1.5, precioMax: 3.0 },
+  { id: 30, nombre: "limonium",          alias: ["limonio", "estatice", "statice"], precioMin: 1.0, precioMax: 2.0 },
+  { id: 31, nombre: "solidago",          alias: [],                                 precioMin: 0.8, precioMax: 1.5 },
+  { id: 32, nombre: "lavanda",           alias: [],                                 unidad: "manojo", precioMin: 2.0, precioMax: 4.0 },
+  { id: 33, nombre: "wax",               alias: ["waxflower", "flor de cera"],      precioMin: 1.2, precioMax: 2.2 },
+  // verdes (suelen ir por manojo o rama)
+  { id: 34, nombre: "eucalipto",         alias: ["eucaliptus"],                     unidad: "manojo", precioMin: 2.0, precioMax: 4.0 },
+  { id: 35, nombre: "ruscus",            alias: ["rusco"],                          unidad: "manojo", precioMin: 1.5, precioMax: 3.0 },
+  { id: 36, nombre: "aspidistra",        alias: ["aspidistras"],                    precioMin: 0.5, precioMax: 1.0 },
+  { id: 37, nombre: "helecho",           alias: ["helechos", "esparraguera"],       unidad: "manojo", precioMin: 1.5, precioMax: 3.0 },
+  { id: 38, nombre: "monstera",          alias: ["hoja de monstera"],               precioMin: 1.0, precioMax: 2.0 },
+  { id: 39, nombre: "pistacho",          alias: ["lentisco", "pistacia"],           unidad: "manojo", precioMin: 2.0, precioMax: 3.5 },
+  { id: 40, nombre: "beargrass",         alias: ["bear grass"],                     unidad: "manojo", precioMin: 1.5, precioMax: 3.0 },
+  // materiales
+  { id: 41, nombre: "espuma",            alias: ["oasis", "esponja"],               precioMin: 1.2, precioMax: 2.5 },
+  { id: 42, nombre: "base",              alias: ["base de centro", "recipiente", "cuenco"], precioMin: 2.0, precioMax: 6.0 },
+  { id: 43, nombre: "cinta",             alias: ["cinta de raso", "lazo"],          unidad: "metro", precioMin: 0.3, precioMax: 0.8 },
+  { id: 44, nombre: "papel",             alias: ["papel de envolver", "celofán", "celofan"], precioMin: 0.5, precioMax: 1.5 },
+  { id: 45, nombre: "alambre",           alias: ["alambres"],                       precioMin: 0.1, precioMax: 0.3 },
+];
+let catalogo = leer("catalogo", CATALOGO_POR_DEFECTO);
+
+// Si Belén ya tiene catálogo guardado de una versión anterior, le añadimos las flores
+// nuevas que no tenga (por nombre), sin tocar las suyas ni sus precios.
+(function completarCatalogo() {
+  const tengo = new Set(catalogo.map((f) => f.nombre));
+  let anadidas = 0;
+  for (const f of CATALOGO_POR_DEFECTO) {
+    if (!tengo.has(f.nombre)) { catalogo.push({ ...f, id: Date.now() + anadidas }); anadidas++; }
+  }
+  if (anadidas) guardar("catalogo", catalogo);
+})();
 let cuenta = leer("cuenta-abierta", null); // {presupuesto, lineas, abierta}
 let editandoId = null;
 let detalleId = null;
