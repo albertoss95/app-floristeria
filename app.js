@@ -123,6 +123,7 @@ function ir(id) {
   window.scrollTo(0, 0);
 }
 // Atajo: desde una línea "sin precio" de la cuenta a Tus flores con la búsqueda hecha.
+function irAFlorId(id) { const f = catalogo.find((x) => x.id === id); if (f) irAFlor(f.nombre); }
 function irAFlor(nombre) {
   if (actualizacionPendiente) { ir("pantalla-flores"); return; } // ir() recarga; la búsqueda se perdería igual
   grupoActivo = "todas";
@@ -462,6 +463,7 @@ function nuevaCuenta() {
 function abrirCuenta(presupuesto) {
   cuenta = { presupuesto, lineas: [], abierta: Date.now() };
   guardar("cuenta-abierta", cuenta);
+  grupoCuenta = "todas"; const b = document.getElementById("buscar-cuenta"); if (b) b.value = "";
   pintarCuenta(); ir("pantalla-cuenta");
 }
 function reabrirCuenta() { pintarCuenta(); ir("pantalla-cuenta"); }
@@ -493,30 +495,109 @@ function lineasConPrecios() {
 }
 function pintarCuenta() {
   document.getElementById("cuenta-titulo").textContent = cuenta.presupuesto ? `Centro de ${cuenta.presupuesto} €` : "Centro";
-  const cont = document.getElementById("cuenta-lineas");
   const lineas = lineasConPrecios();
-  if (!lineas.length) {
-    cont.innerHTML = '<p class="vacio">Nada todavía. Mantén pulsado el botón y di lo que metes.</p>';
-  } else {
-    cont.innerHTML = lineas.map((l, i) =>
-      `<div class="linea"><span class="cant">${l.cantidad ?? "~"}</span><span class="arti">${esc(l.articulo)}${l.unidad ? " (" + l.unidad + ")" : ""}${l.precioMin == null ? ` <span class="sinprecio" onclick="irAFlor(cuenta.lineas[${i}].articulo)">sin precio · ponerlo</span>` : ""}</span><button onclick="quitarLinea(${i})">✕</button></div>`
-    ).join("");
-  }
-  // barra
-  const barra = document.getElementById("cuenta-barra");
   const t = totalCuenta(lineas);
-  if (cuenta.presupuesto && (t.min > 0 || t.max > 0)) {
-    barra.classList.remove("oculto");
+  const nTotal = lineas.reduce((s, l) => s + (l.cantidad ?? 0), 0);
+
+  // barra: siempre visible para que la cabecera no baile; sin presupuesto muestra solo el importe
+  const relleno = document.getElementById("cuenta-barra-relleno");
+  const hayImporte = t.min > 0 || t.max > 0;
+  const rango = hayImporte ? `≈ ${Math.round(t.min)}–${Math.round(t.max)} €` : "";
+  const sinPrecio = t.sinPrecio ? ` (+${t.sinPrecio} sin precio)` : "";
+  if (cuenta.presupuesto) {
     const medio = (t.min + t.max) / 2;
-    const pct = Math.min(100, (medio / cuenta.presupuesto) * 100);
-    const relleno = document.getElementById("cuenta-barra-relleno");
-    relleno.style.width = pct + "%";
+    relleno.style.width = Math.min(100, (medio / cuenta.presupuesto) * 100) + "%";
     relleno.classList.toggle("pasado", medio > cuenta.presupuesto);
-    document.getElementById("cuenta-barra-texto").textContent =
-      `≈ ${Math.round(t.min)}–${Math.round(t.max)} € de ${cuenta.presupuesto} €` + (t.sinPrecio ? ` (+${t.sinPrecio} sin precio)` : "");
-  } else barra.classList.add("oculto");
+    document.getElementById("cuenta-barra-texto").textContent = (hayImporte ? `${rango} de ${cuenta.presupuesto} €` : `0 € de ${cuenta.presupuesto} €`) + sinPrecio;
+  } else {
+    relleno.style.width = "0";
+    document.getElementById("cuenta-barra-texto").textContent = hayImporte ? `Llevas ${rango}${sinPrecio}` : "Toca + en lo que metas";
+  }
+  // resumen de lo que lleva
+  document.getElementById("cuenta-resumen").innerHTML = lineas.length
+    ? lineas.map((l) => `<span class="pastilla">${l.cantidad ?? "~"} ${esc(l.articulo)}</span>`).join("") + (nTotal ? `<span class="pastilla total">${nTotal} en total</span>` : "")
+    : '<span class="pastilla vacia">nada todavía</span>';
+
+  // selector: buscador + grupos + filas con − n +
+  const q = normalizar(document.getElementById("buscar-cuenta")?.value || "");
+  const enCuenta = new Map(cuenta.lineas.filter((l) => l.florId != null).map((l) => [l.florId, l]));
+  const presentes = GRUPOS.filter((g) => catalogo.some((f) => (f.grupo || "mías") === g));
+  const chip = (g, txt) => `<button class="chip ${grupoCuenta === g ? "on" : ""}" onclick="grupoCuenta='${g}';pintarCuenta()">${txt}</button>`;
+  document.getElementById("grupos-cuenta").innerHTML =
+    chip("todas", "todas") + (enCuenta.size ? chip("en-el-centro", `en el centro · ${enCuenta.size}`) : "") + presentes.map((g) => chip(g, g)).join("");
+
+  const orden = (f) => GRUPOS.indexOf(f.grupo || "mías");
+  const visibles = catalogo
+    .slice()
+    .sort((a, b) => orden(a) - orden(b) || a.nombre.localeCompare(b.nombre, "es"))
+    .filter((f) => grupoCuenta === "todas" || (grupoCuenta === "en-el-centro" ? enCuenta.has(f.id) : (f.grupo || "mías") === grupoCuenta))
+    .filter((f) => !q || normalizar(f.nombre).includes(q) || (f.alias || []).some((a) => normalizar(a).includes(q)));
+
+  let html = "", ultimo = null;
+  for (const f of visibles) {
+    const g = f.grupo || "mías";
+    if (grupoCuenta === "todas" && !q && g !== ultimo) { html += `<div class="dia-cabecera">${g}</div>`; ultimo = g; }
+    const l = enCuenta.get(f.id);
+    const n = l?.cantidad ?? 0;
+    const precio = f.precioMin != null ? `${f.precioMin}–${f.precioMax ?? f.precioMin} €${f.unidad ? "/" + f.unidad : ""}` : `<span class="sinprecio" onclick="irAFlorId(${f.id})">sin precio</span>`;
+    html += `<div class="sel-fila ${n ? "en" : ""}">
+      <div class="sel-info"><div class="sel-nombre">${esc(f.nombre)}</div><div class="sel-precio">${precio}</div></div>
+      <div class="stepper">
+        <button onclick="sumarFlor(${f.id}, -1)" aria-label="una menos" ${n ? "" : "disabled"}>−</button>
+        <span class="n" onclick="cantidadFlor(${f.id})">${n}</span>
+        <button class="mas" onclick="sumarFlor(${f.id}, 1)" aria-label="una más">+</button>
+      </div>
+    </div>`;
+  }
+  document.getElementById("cuenta-selector").innerHTML = html || `<p class="vacio">Nada con "${esc(q)}". <a href="#" onclick="anadirFlorDesdeCuenta();return false">Añadir "${esc(q)}"</a></p>`;
+
+  // cosas dictadas que no están en el catálogo (solo con la voz activada)
+  const sueltas = cuenta.lineas.map((l, i) => ({ l, i })).filter(({ l }) => l.florId == null);
+  const cont = document.getElementById("cuenta-lineas");
+  cont.classList.toggle("oculto", !sueltas.length);
+  cont.innerHTML = sueltas.map(({ l, i }) =>
+    `<div class="linea"><span class="cant">${l.cantidad ?? "~"}</span><span class="arti">${esc(l.articulo)}${l.unidad ? " (" + l.unidad + ")" : ""}${lineas[i].precioMin == null ? ` <span class="sinprecio" onclick="irAFlor(cuenta.lineas[${i}].articulo)">sin precio · ponerlo</span>` : ""}</span><button onclick="quitarLinea(${i})">✕</button></div>`
+  ).join("");
+}
+let grupoCuenta = "todas";
+function sumarFlor(id, delta) {
+  const f = catalogo.find((x) => x.id === id); if (!f) return;
+  const u = f.unidad || null;
+  let l = cuenta.lineas.find((x) => x.florId === id);
+  if (!l) {
+    if (delta <= 0) return;
+    l = { cantidad: 0, unidad: u, articulo: f.nombre, florId: id, precioMin: f.precioMin ?? null, precioMax: f.precioMax ?? null };
+    cuenta.lineas.push(l);
+  }
+  l.cantidad = (l.cantidad ?? 0) + delta;
+  if (l.cantidad <= 0) cuenta.lineas.splice(cuenta.lineas.indexOf(l), 1);
+  guardar("cuenta-abierta", cuenta);
+  pintarCuenta();
+}
+function cantidadFlor(id) {
+  const f = catalogo.find((x) => x.id === id); if (!f) return;
+  const actual = cuenta.lineas.find((x) => x.florId === id)?.cantidad ?? 0;
+  const v = parseInt(prompt(`¿Cuántas ${f.nombre}?`, actual || ""), 10);
+  if (isNaN(v) || v < 0) return;
+  sumarFlor(id, v - actual);
+}
+function anadirFlorDesdeCuenta() {
+  const nombre = (document.getElementById("buscar-cuenta")?.value || "").toLowerCase().trim(); if (!nombre) return;
+  const f = { id: Date.now(), nombre, alias: [], grupo: "mías", precioMin: null, precioMax: null };
+  catalogo.push(f); guardar("catalogo", catalogo);
+  document.getElementById("buscar-cuenta").value = "";
+  sumarFlor(f.id, 1);
 }
 function quitarLinea(i) { cuenta.lineas.splice(i, 1); guardar("cuenta-abierta", cuenta); pintarCuenta(); }
+
+/* ---------- voz: opcional, se activa en Ajustes ---------- */
+function aplicarVoz() {
+  const on = !!leer("voz", false);
+  document.getElementById("zona-voz").classList.toggle("oculto", !on);
+  document.getElementById("pantalla-cuenta").classList.toggle("con-voz", on);
+  const cb = document.getElementById("aj-voz"); if (cb) cb.checked = on;
+}
+document.addEventListener("DOMContentLoaded", aplicarVoz);
 
 function procesarFrase(frase) {
   const r = procesarDictado(frase, cuenta.lineas, catalogo);
@@ -640,8 +721,9 @@ function exportarTodo() {
 /* ---------- versión y novedades ---------- */
 // Subir VERSION en cada despliegue y contar en NOVEDADES qué cambia, en las palabras de
 // Belén: es lo que verá en el aviso al abrir la app tras actualizarse.
-const VERSION = "2026-09-23.7";
+const VERSION = "2026-09-23.8";
 const NOVEDADES = {
+  "2026-09-23.8": "Calcular centro ahora es tocar: buscas la flor, le das a + y la barra de arriba te dice cuánto llevas. El dictado por voz queda apagado; si quieres probarlo, se enciende en Ajustes.",
   "2026-09-23.7": "Arreglos en la cuenta: \"quita una hortensia\" quita una (no todas), \"tres rosas más\" y \"no, quita una\" ya se entienden. Si dejas un encargo a medias, en el inicio sale para seguirlo. Los precios aceptan coma (4,5). Botones más grandes.",
   "2026-09-23.6": "Barra de abajo para ir a Inicio, Flores, Histórico y Ajustes. Las actualizaciones se instalan solas y te avisan. En la cuenta, toca \"sin precio\" para ponérselo a una flor.",
   "2026-09-23.5": "Botón \"se tira algo\" en el inicio: apunta lo que tiras en dos toques y el histórico te dice cuánto dinero se ha ido al mes.",

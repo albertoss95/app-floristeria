@@ -250,5 +250,50 @@ input:focus, textarea:focus, select:focus {
 .linea .sinprecio { padding: 10px 12px; margin: -6px 0; }
 /* la cuenta lleva micro + teclado fijos abajo (~216 px): sitio para que la última línea
    y la respuesta a "cuánto llevo" no queden tapadas */
-#pantalla-cuenta { padding-bottom: 240px; }
 #pantalla-flores { padding-bottom: 120px; } /* que "Añadir flor" no asome debajo de la barra */
+
+/* ---------- la cuenta: elegir tocando ---------- */
+#pantalla-cuenta { padding-bottom: 110px; }          /* sin voz no hay nada fijo abajo salvo nada */
+#pantalla-cuenta.con-voz { padding-bottom: 240px; }   /* con voz: micro + teclado fijos */
+.cuenta-cabecera {
+  position: sticky; top: 0; z-index: 5; background: var(--fondo);
+  padding: 6px 0 8px; margin: -6px -4px 6px; padding-left: 4px; padding-right: 4px;
+  box-shadow: 0 10px 12px -12px rgba(31, 42, 29, .25);
+}
+.cuenta-resumen { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 30px; }
+.pastilla {
+  background: var(--crema-tarjeta); border: 1px solid var(--borde); border-radius: 99px;
+  padding: 5px 11px; font-size: .86rem; font-weight: 700; color: var(--tinta);
+}
+.pastilla.total { background: var(--lavanda); border-color: var(--lavanda); color: #fff; }
+.pastilla.vacia { color: #a3ac98; font-weight: 600; border-style: dashed; }
+#buscar-cuenta { margin: 6px 0 10px; border-radius: 14px; box-shadow: var(--sombra); font-size: 1.05rem; }
+.sel-fila {
+  display: flex; align-items: center; gap: 10px; background: var(--crema-tarjeta);
+  border: 1px solid var(--borde); border-radius: 14px; padding: 8px 8px 8px 14px; margin: 8px 0; box-shadow: var(--sombra);
+  transition: background .15s, border-color .15s;
+}
+.sel-fila.en { background: #f4f0fb; border-color: #d9cdef; }
+.sel-info { flex: 1; min-width: 0; }
+.sel-nombre { font-weight: 700; font-size: 1.05rem; }
+.sel-precio { font-size: .82rem; color: var(--tinta-suave); margin-top: 2px; }
+.sel-precio .sinprecio { display: inline-block; font-size: .74rem; color: #fff; background: var(--ambar); padding: 5px 9px; border-radius: 99px; font-weight: 700; cursor: pointer; }
+.stepper { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.stepper button {
+  width: 46px; height: 46px; border-radius: 12px; border: 1.5px solid var(--borde); background: #fff;
+  font-size: 1.5rem; font-weight: 700; color: var(--tinta-suave); line-height: 1;
+}
+.stepper button.mas { background: var(--lavanda); border-color: var(--lavanda); color: #fff; }
+.stepper button:disabled { opacity: .35; }
+.stepper button:active { transform: scale(.94); }
+.stepper .n { min-width: 40px; text-align: center; font-size: 1.25rem; font-weight: 800; color: var(--tinta); }
+.sel-fila.en .stepper .n { color: var(--lavanda-osc); }
+
+/* ---------- ajustes ---------- */
+.ajuste-fila {
+  display: flex; align-items: center; gap: 14px; background: var(--crema-tarjeta); border: 1px solid var(--borde);
+  border-radius: var(--radio); padding: 14px 16px; margin: 12px 0; box-shadow: var(--sombra); font-weight: 700; font-size: 1rem; color: var(--tinta);
+  text-transform: none; letter-spacing: 0;
+}
+.ajuste-fila span { flex: 1; } .ajuste-fila small { display: block; font-weight: 500; color: var(--tinta-suave); font-size: .84rem; margin-top: 3px; }
+.ajuste-fila input[type=checkbox] { width: 28px; height: 28px; accent-color: var(--verde); flex-shrink: 0; }
