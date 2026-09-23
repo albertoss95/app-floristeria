@@ -418,4 +418,32 @@ function exportarTodo() {
 }
 
 /* ---------- service worker (funciona sin cobertura) ---------- */
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").then((reg) => {
+    // si hay versión nueva, recargar una vez para que se vea sin que Belén haga nada
+    reg.addEventListener("updatefound", () => {
+      const nuevo = reg.installing;
+      nuevo?.addEventListener("statechange", () => {
+        if (nuevo.state === "activated" && navigator.serviceWorker.controller) location.reload();
+      });
+    });
+  }).catch(() => {});
+}
+
+/* ---------- versión visible (para saber qué tiene instalado cada móvil) ---------- */
+const VERSION = "2026-09-23.3";
+document.addEventListener("DOMContentLoaded", () => {
+  const v = document.getElementById("version"); if (v) v.textContent = "v " + VERSION;
+});
+
+async function forzarActualizacion() {
+  if ("serviceWorker" in navigator) {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(regs.map((r) => r.unregister()));
+  }
+  if ("caches" in window) {
+    const ks = await caches.keys();
+    await Promise.all(ks.map((k) => caches.delete(k)));
+  }
+  location.reload(true);
+}
