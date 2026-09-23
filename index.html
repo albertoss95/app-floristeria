@@ -19,6 +19,7 @@
   <button class="btn-gigante morado" onclick="nuevaCuenta()"><span class="icono">✿</span><span>Calcular centro<small>di lo que metes y lleva la cuenta</small></span></button>
 
   <div id="aviso-cuenta-abierta" class="aviso-cuenta oculto" onclick="reabrirCuenta()"></div>
+  <div id="aviso-borrador" class="aviso-cuenta oculto" onclick="seguirBorrador()"></div>
 
   <h2>Encargos apuntados</h2>
   <div id="lista-encargos"></div>
@@ -66,7 +67,7 @@
   <label>Quién lo pide</label><input id="enc-cliente" placeholder="nombre o teléfono del cliente">
 
   <button class="btn-gigante verde" onclick="guardarEncargo()">✓ &nbsp;Guardar</button>
-  <button class="btn-plano" onclick="ir('pantalla-inicio')">descartar</button>
+  <button class="btn-plano rojo" onclick="if(confirm('¿Descartar lo escrito?'))descartarEncargo()">descartar</button>
 </section>
 
 <!-- ============ DETALLE DE ENCARGO ============ -->

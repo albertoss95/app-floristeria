@@ -133,7 +133,7 @@ input:focus, textarea:focus, select:focus {
   background: #eef3e9; color: var(--verde-osc); border-radius: 10px; font-size: .95rem; margin-right: 8px;
 }
 .linea .arti { flex: 1; font-weight: 600; }
-.linea .sinprecio { font-size: .74rem; color: #fff; background: #c5bfae; padding: 2px 8px; border-radius: 99px; font-weight: 700; vertical-align: middle; }
+.linea .sinprecio { display: inline-block; font-size: .78rem; color: #fff; background: var(--ambar); padding: 6px 10px; border-radius: 99px; font-weight: 700; vertical-align: middle; cursor: pointer; }
 .linea button { background: none; border: none; color: #c9c2b2; font-size: 1.25rem; padding: 4px 8px; }
 .respuesta {
   background: linear-gradient(135deg, #e9f1fb, #ddeaf9); border: 1.5px solid #c4d8ef;
@@ -209,8 +209,9 @@ input:focus, textarea:focus, select:focus {
 .tirar-fila .nombre { display: block; font-weight: 700; margin-bottom: 7px; }
 .tirar-fila .nombre small { color: var(--tinta-suave); font-weight: 600; }
 .tirar-fila .cantidades { display: flex; gap: 6px; flex-wrap: wrap; }
-.tirar-fila .cantidades .chip { padding: 9px 0; min-width: 46px; text-align: center; color: var(--terracota); border-color: #f0d9cf; }
+.tirar-fila .cantidades .chip { padding: 12px 0; min-width: 48px; text-align: center; color: #9a4a2c; border-color: #ead2c6; font-size: 1rem; }
 .tirar-fila .cantidades .chip:active { background: var(--terracota); color: #fff; }
+#tirado-hoy .flor-fila button { padding: 8px 12px; }
 
 /* ---------- barra inferior de pestañas ---------- */
 .barra-inferior {
@@ -227,7 +228,6 @@ input:focus, textarea:focus, select:focus {
 .barra-inferior button.on { color: var(--verde); }
 .barra-inferior button.on span { filter: none; }
 .barra-inferior button:active { background: #f1f4ec; }
-.linea .sinprecio { cursor: pointer; background: var(--ambar); }
 
 /* ---------- avisos de actualización ---------- */
 .aviso-novedades {
@@ -236,7 +236,19 @@ input:focus, textarea:focus, select:focus {
 }
 .aviso-novedades small { color: var(--tinta-suave); }
 .aviso-actualizacion {
-  position: fixed; left: 12px; right: 12px; bottom: 14px; z-index: 30; max-width: 536px; margin: 0 auto;
+  /* arriba: abajo taparía el teclado de la cuenta y el botón de hablar */
+  position: fixed; left: 12px; right: 12px; top: calc(10px + env(safe-area-inset-top)); z-index: 30; max-width: 536px; margin: 0 auto;
   background: var(--tinta); color: #fff; border-radius: 14px; padding: 12px 16px; font-size: .92rem; font-weight: 700;
   text-align: center; box-shadow: 0 8px 24px -6px rgba(0,0,0,.35);
 }
+
+/* ---------- áreas táctiles ≥ 44 px (informe de pruebas 23/09) ---------- */
+.btn-icono { min-height: 44px; min-width: 44px; }
+.linea button, .flor-fila button { min-width: 44px; min-height: 44px; padding: 8px 10px; }
+.flor-fila input.precio { min-height: 44px; }
+.chip { min-height: 40px; padding: 10px 16px; }
+.linea .sinprecio { padding: 10px 12px; margin: -6px 0; }
+/* la cuenta lleva micro + teclado fijos abajo (~216 px): sitio para que la última línea
+   y la respuesta a "cuánto llevo" no queden tapadas */
+#pantalla-cuenta { padding-bottom: 240px; }
+#pantalla-flores { padding-bottom: 120px; } /* que "Añadir flor" no asome debajo de la barra */

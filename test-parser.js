@@ -134,6 +134,50 @@ caso("C14", "varias desconocidas seguidas", "dos proteas cuatro anturios", [], (
   return e;
 });
 
+// --- bugs encontrados por pyme-app-tester (23/09) ---
+const ESTADO_3 = [
+  { cantidad: 5, unidad: null, articulo: "rosa roja", florId: 2, precioMin: 1.5, precioMax: 2.5 },
+  { cantidad: 3, unidad: null, articulo: "hortensia", florId: 1, precioMin: 3, precioMax: 5 },
+  { cantidad: 6, unidad: null, articulo: "girasol", florId: 6, precioMin: 1.8, precioMax: 2.5 },
+];
+caso("C15", "'quita una X' resta una, no borra la linea", "quita una hortensia", ESTADO_3, (r) => {
+  const h = linea(r, "hortensia");
+  return h?.cantidad === 2 ? [] : [`hortensia = ${h?.cantidad}, esperaba 2`];
+});
+caso("C16", "'quita las X' si borra la linea", "quita las hortensias", ESTADO_3, (r) => {
+  return linea(r, "hortensia") ? ["hortensia sigue"] : [];
+});
+caso("C17", "'mas' al final + 'no' + 'quita una' sin flor -> neto sobre la ultima tocada",
+  "pon dos rosas rojas mas, no, quita una", ESTADO_3, (r) => {
+  const e = [];
+  if (linea(r, "rosa roja")?.cantidad !== 6) e.push(`rosa roja = ${linea(r, "rosa roja")?.cantidad}, esperaba 6`);
+  if ((r.lineas || []).length !== 3) e.push(`${(r.lineas || []).length} lineas, esperaba 3 (linea fantasma?)`);
+  if (linea(r, "girasol")?.cantidad !== 6) e.push("ha tocado los girasoles");
+  return e;
+});
+caso("C18", "C03 con cuenta llena: 'deja una sola' va a la ultima flor tocada, no a la ultima linea",
+  "pon dos rosas rojas no espera quita una deja una sola", ESTADO_3, (r) => {
+  const e = [];
+  if (linea(r, "rosa roja")?.cantidad !== 1) e.push(`rosa roja = ${linea(r, "rosa roja")?.cantidad}, esperaba 1`);
+  if (linea(r, "girasol")?.cantidad !== 6) e.push(`girasol = ${linea(r, "girasol")?.cantidad}, esperaba 6 intacto`);
+  return e;
+});
+caso("C19", "'otras dos' y 'tres X mas' no crean fantasmas", "otras dos hortensias y tres girasoles mas", ESTADO_3, (r) => {
+  const e = [];
+  if (linea(r, "hortensia")?.cantidad !== 5) e.push("hortensia != 5");
+  if (linea(r, "girasol")?.cantidad !== 9) e.push("girasol != 9");
+  if ((r.lineas || []).length !== 3) e.push(`${(r.lineas || []).length} lineas, esperaba 3`);
+  return e;
+});
+caso("C20", "C07 completo: 'la base de siempre' no se traga la espuma",
+  "la base de siempre, espuma y un par de metros de cinta de raso", [], (r) => {
+  const e = [];
+  if (!linea(r, "espuma")) e.push("falta espuma");
+  if (!(r.lineas || []).some((l) => l.articulo === "base")) e.push("falta base");
+  if ((r.lineas || []).length !== 3) e.push(`${(r.lineas || []).length} lineas, esperaba 3`);
+  return e;
+});
+
 // total
 const t = totalCuenta(ESTADO_BASE);
 if (t.min === 12.8 && t.max === 21.2) { pasan++; console.log("PASA  T01 total con rangos"); }

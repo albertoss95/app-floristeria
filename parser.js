@@ -15,7 +15,7 @@ function normalizar(s) {
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zñ0-9\s]/g, " ")
+    .replace(/[^a-zñ0-9\s,]/g, " ") // la coma se conserva: separa trozos al teclear
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -129,8 +129,13 @@ function procesarDictado(frase, lineas, catalogo) {
   // limpia muletillas ANTES de trocear (para que "no espera quita una" quede "quita una").
   // Los articulos "la/el/las/los" solo se quitan cuando NO van detras de "de" (para no
   // romper "dos mas de las blancas", que necesita el "las" para detectar la ambiguedad).
+  // "mas" solo se conserva en "mas de las blancas"; al final ("tres rosas mas") es ruido.
+  // "no" suelto ("pon dos, no, quita una") tambien es ruido: en un dictado de flores no
+  // niega nada, separa una correccion. "otras dos hortensias" = "dos hortensias".
   const limpio = norm
-    .replace(/\b(no espera|espera|pon|ponme|mete|meto|anade|anado|apunta|apunto|he puesto|puse|vale|eh|em|pues|venga|a ver|que no me pegan?)\b/g, " ")
+    .replace(/\b(no espera|espera|pon|ponme|mete|meto|anade|anado|apunta|apunto|he puesto|puse|vale|eh|em|pues|venga|a ver|que no me pegan?|de siempre|otras?|otros?)\b/g, " ")
+    .replace(/\bmas\b(?!\s+de\b)/g, " ")
+    .replace(/(^|\s|,)no(\s|,|$)/g, "$1 $2")
     .replace(/(^|\s)(?<!de\s)(la|el|las|los)\s+(?!de\b)/g, "$1")
     .replace(/\s+/g, " ")
     .trim();
@@ -142,25 +147,37 @@ function procesarDictado(frase, lineas, catalogo) {
     .map((t) => t.trim())
     .filter(Boolean);
 
+  // La ultima linea que esta frase ha tocado: es a la que se refieren "quita una" o
+  // "deja una sola" cuando no nombran flor ("pon dos rosas, no, quita una").
+  let ultimaTocada = null;
+
   for (const trozo of trozos) {
 
-    // QUITAR: "quita las hortensias", "quita una rosa", "fuera el eucalipto"
-    const mQuitar = trozo.match(/^(?:quita|quitame|fuera|saca|elimina|borra)\s+(?:la |las |el |los |una |un )?(.*)$/);
+    // QUITAR: "quita las hortensias", "quita una rosa", "fuera el eucalipto", "quita una"
+    // OJO: solo se descartan los articulos la/las/el/los; "una/un" es una cantidad.
+    const mQuitar = trozo.match(/^(?:quita|quitame|fuera|saca|elimina|borra)\s*(?:la |las |el |los )?(.*)$/);
     if (mQuitar) {
-      const { cantidad, resto } = leerCantidad(mQuitar[1].split(" "));
-      const casa = casarFlor(resto.length ? resto : mQuitar[1].split(" "), catalogo);
-      const objetivo = casa
-        ? resultado.filter((l) => l.florId === casa.flor.id)
-        : resultado.filter((l) => normalizar(l.articulo).includes(singular(resto[0] || mQuitar[1])));
-      if (!objetivo.length) {
-        avisos.push(`No tienes ${mQuitar[1]} en la cuenta.`);
+      const { cantidad, resto } = leerCantidad(mQuitar[1].split(" ").filter(Boolean));
+      let linea = null;
+      if (resto.length) {
+        const casa = casarFlor(resto, catalogo);
+        const objetivo = casa
+          ? resultado.filter((l) => l.florId === casa.flor.id)
+          : resultado.filter((l) => normalizar(l.articulo).includes(singular(resto[0])));
+        linea = objetivo[objetivo.length - 1] || null;
+      } else {
+        linea = ultimaTocada || resultado[resultado.length - 1] || null; // "quita una" sin flor
+      }
+      if (!linea) {
+        avisos.push(resto.length ? `No tienes ${resto.join(" ")} en la cuenta.` : "¿Quitar qué?");
         continue;
       }
-      const linea = objetivo[objetivo.length - 1];
-      if (cantidad == null || cantidad >= linea.cantidad) {
+      if (cantidad == null || linea.cantidad == null || cantidad >= linea.cantidad) {
         resultado.splice(resultado.indexOf(linea), 1);
+        ultimaTocada = null;
       } else {
         linea.cantidad -= cantidad;
+        ultimaTocada = linea;
       }
       cambio = true;
       continue;
@@ -176,9 +193,10 @@ function procesarDictado(frase, lineas, catalogo) {
         const casa = casarFlor(resto, catalogo);
         if (casa) linea = resultado.filter((l) => l.florId === casa.flor.id).pop();
       }
-      if (!linea) linea = resultado[resultado.length - 1];
+      if (!linea) linea = ultimaTocada || resultado[resultado.length - 1];
       if (!linea) { avisos.push("No hay nada en la cuenta todavía."); continue; }
       linea.cantidad = cantidad;
+      ultimaTocada = linea;
       cambio = true;
       continue;
     }
@@ -201,6 +219,7 @@ function procesarDictado(frase, lineas, catalogo) {
       }
       if (candidatas.length === 1 && cantidad != null) {
         candidatas[0].cantidad += cantidad;
+        ultimaTocada = candidatas[0];
         cambio = true;
         continue;
       }
@@ -216,29 +235,34 @@ function procesarDictado(frase, lineas, catalogo) {
       if (casa) {
         const u = unidad || casa.flor.unidad || null;
         const existente = resultado.find((l) => l.florId === casa.flor.id && l.unidad === u);
-        if (existente && cantidad != null) existente.cantidad += cantidad;
-        else resultado.push({
-          cantidad: indeterminado ? null : cantidad,
-          unidad: u,
-          articulo: casa.flor.nombre,
-          florId: casa.flor.id,
-          precioMin: casa.flor.precioMin ?? null,
-          precioMax: casa.flor.precioMax ?? null,
-        });
+        if (existente && cantidad != null) { existente.cantidad += cantidad; ultimaTocada = existente; }
+        else {
+          const nueva = {
+            cantidad: indeterminado ? null : cantidad,
+            unidad: u,
+            articulo: casa.flor.nombre,
+            florId: casa.flor.id,
+            precioMin: casa.flor.precioMin ?? null,
+            precioMax: casa.flor.precioMax ?? null,
+          };
+          resultado.push(nueva); ultimaTocada = nueva;
+        }
         cambio = true;
         palabras = resto.slice(casa.consumidas); // sigue con lo que quede del trozo
       } else {
         // fuera de catalogo: el articulo desconocido llega SOLO hasta donde empieza
-        // la siguiente cantidad ("5 rosas 3 hortensias" son dos lineas, no una)
+        // la siguiente cantidad ("5 rosas 3 hortensias" son dos lineas, no una) o la
+        // siguiente flor conocida ("cosa rara espuma" -> "cosa rara" + espuma)
         let corte = resto.length;
         for (let j = 1; j < resto.length; j++) {
-          if (empiezaCantidad(resto, j)) { corte = j; break; }
+          if (empiezaCantidad(resto, j) || casarFlor(resto.slice(j), catalogo)) { corte = j; break; }
         }
         const articulo = resto.slice(0, corte).join(" ");
-        resultado.push({
+        const nueva = {
           cantidad: indeterminado ? null : cantidad, unidad: unidad || null,
           articulo, florId: null, precioMin: null, precioMax: null,
-        });
+        };
+        resultado.push(nueva); ultimaTocada = nueva;
         avisos.push(`"${articulo}" no está en tus flores: apuntado sin precio.`);
         cambio = true;
         palabras = resto.slice(corte);

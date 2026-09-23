@@ -102,8 +102,14 @@ let detalleId = null;
 // Pantallas de primer nivel: tienen barra inferior y en ellas es seguro recargar
 // para instalar una versión nueva (no hay nada a medio escribir).
 const PRINCIPALES = ["pantalla-inicio", "pantalla-flores", "pantalla-historico", "pantalla-ajustes"];
+let actualizacionPendiente = false; // hay un service worker nuevo esperando a que sea buen momento
+function recargarSinPerderNada() {
+  // un input enfocado con onchange aún no ha guardado: soltar el foco antes de recargar
+  document.activeElement?.blur?.();
+  setTimeout(() => location.reload(), 30);
+}
 function ir(id) {
-  if (PRINCIPALES.includes(id) && actualizacionPendiente) { location.reload(); return; }
+  if (PRINCIPALES.includes(id) && actualizacionPendiente) { recargarSinPerderNada(); return; }
   document.querySelectorAll(".pantalla").forEach((p) => p.classList.remove("activa"));
   document.getElementById(id).classList.add("activa");
   const barra = document.getElementById("barra");
@@ -116,8 +122,9 @@ function ir(id) {
   if (id === "pantalla-ajustes") pintarAjustes();
   window.scrollTo(0, 0);
 }
-// Atajo: desde una línea "sin precio" (cuenta, histórico) a Tus flores con la búsqueda hecha.
+// Atajo: desde una línea "sin precio" de la cuenta a Tus flores con la búsqueda hecha.
 function irAFlor(nombre) {
+  if (actualizacionPendiente) { ir("pantalla-flores"); return; } // ir() recarga; la búsqueda se perdería igual
   grupoActivo = "todas";
   ir("pantalla-flores");
   const b = document.getElementById("buscar-flor"); b.value = nombre; pintarFlores();
@@ -153,10 +160,10 @@ function pintarTirar() {
   const cantidades = [1, 2, 3, 5, 10];
   document.getElementById("lista-tirar").innerHTML = visibles.length
     ? visibles.map((f) => `<div class="tirar-fila">
-        <span class="nombre">${f.nombre}${f.unidad ? ` <small>(${f.unidad})</small>` : ""}</span>
+        <span class="nombre">${esc(f.nombre)}${f.unidad ? ` <small>(${f.unidad})</small>` : ""}</span>
         <div class="cantidades">${cantidades.map((n) => `<button class="chip" onclick="apuntarTirado(${f.id}, ${n})">${n}</button>`).join("")}<button class="chip" onclick="apuntarTirado(${f.id}, null)">otra</button></div>
       </div>`).join("")
-    : `<p class="vacio">Nada con "${q}". <a href="#" onclick="anadirFlorDesdeTirar();return false">Añadir "${q}"</a></p>`;
+    : `<p class="vacio">Nada con "${esc(q)}". <a href="#" onclick="anadirFlorDesdeTirar();return false">Añadir "${esc(q)}"</a></p>`;
 
   // lo de hoy, con deshacer
   const hoy = hoyISO();
@@ -164,7 +171,7 @@ function pintarTirar() {
   const total = totalCuenta(deHoy.map(({ t }) => ({ cantidad: t.cantidad, ...precioDe(t) })));
   document.getElementById("tirado-hoy").innerHTML = deHoy.length
     ? `<p class="ayuda" style="margin:0 0 6px">${deHoy.reduce((s, { t }) => s + t.cantidad, 0)} en total ${textoEuros(total) ? "· " + textoEuros(total) : ""}</p>` +
-      deHoy.map(({ t, i }) => `<div class="flor-fila"><span class="nombre" style="flex:2;padding:8px;font-weight:600">${t.cantidad} ${t.nombre}</span><button onclick="tirado.splice(${i},1);guardar('tirado',tirado);pintarTirar()" title="deshacer">✕</button></div>`).join("")
+      deHoy.map(({ t, i }) => `<div class="flor-fila"><span class="nombre" style="flex:2;padding:8px;font-weight:600">${t.cantidad} ${esc(t.nombre)}</span><button onclick="tirado.splice(${i},1);guardar('tirado',tirado);pintarTirar()" title="deshacer">✕</button></div>`).join("")
     : '<p class="vacio">Hoy nada, bien.</p>';
 }
 function apuntarTirado(florId, cantidad) {
@@ -208,10 +215,11 @@ function pintarHistoricoTirado() {
     const porFlor = new Map();
     for (const t of items) porFlor.set(t.nombre, (porFlor.get(t.nombre) || 0) + t.cantidad);
     const top = [...porFlor.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([nom, c]) => `${c} ${nom}`).join(", ");
-    const sinPrecio = total.sinPrecio ? ` · <a href="#" onclick="ir('pantalla-flores');return false">${total.sinPrecio} sin precio en Tus flores</a>` : "";
+    const tallosSinPrecio = items.filter((t) => precioDe(t).precioMin == null).reduce((s, t) => s + t.cantidad, 0);
+    const sinPrecio = tallosSinPrecio ? ` · <a href="#" onclick="ir('pantalla-flores');return false">${tallosSinPrecio} sin precio en Tus flores</a>` : "";
     return `<div class="tarjeta-encargo hecho" style="opacity:1">
       <div class="titulo">${MESES[parseInt(m, 10) - 1]} ${y} · ${n} tirados ${textoEuros(total) ? "· " + textoEuros(total) : ""}</div>
-      <div class="sub">${top}${sinPrecio}</div>
+      <div class="sub">${esc(top)}${sinPrecio}</div>
     </div>`;
   }).join("");
 }
@@ -230,7 +238,7 @@ function pintarHistorico() {
         const importe = (t.min || t.max) ? `≈ ${Math.round(t.min)}–${Math.round(t.max)} €` : "";
         return `<div class="tarjeta-encargo hecho" style="opacity:1">
           <div class="titulo">${c.presupuesto ? "Centro de " + c.presupuesto + " €" : "Centro"} ${importe ? "· " + importe : ""}</div>
-          <div class="sub">${fechaCorta(c.cerrada)} · ${c.lineas.map((l) => `${l.cantidad ?? "~"} ${l.articulo}`).join(", ")}</div>
+          <div class="sub">${fechaCorta(c.cerrada)} · ${esc(c.lineas.map((l) => `${l.cantidad ?? "~"} ${l.articulo}`).join(", "))}</div>
         </div>`;
       }).join("")
     : '<p class="vacio">Todavía ninguno.</p>';
@@ -255,8 +263,15 @@ function fechaLarga(iso) {
   const d = new Date(iso + "T00:00:00");
   return `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}`.toUpperCase();
 }
-const hoyISO = () => new Date().toISOString().slice(0, 10);
-function mananaISO() { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10); }
+// Fecha LOCAL (toISOString es UTC: entre las 0 y las 2 de la madrugada cambiaba el "hoy")
+function isoLocal(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
+const hoyISO = () => isoLocal(new Date());
+function mananaISO() { const d = new Date(); d.setDate(d.getDate() + 1); return isoLocal(d); }
+// Números tal y como los escribe Belén: el teclado decimal de Android en español pone coma
+function num(v) { const n = parseFloat(String(v ?? "").replace(",", ".")); return isNaN(n) ? null : n; }
+// Texto de usuario dentro de HTML/atributos (nombres con comillas, dedicatorias pegadas de WhatsApp)
+function esc(s) { return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
+const salto = (s) => esc(s).replace(/\n/g, "<br>");
 
 /* ---------- INICIO ---------- */
 function pintarInicio() {
@@ -267,6 +282,16 @@ function pintarInicio() {
     aviso.textContent = `▲ Tienes una cuenta abierta${cuenta.presupuesto ? ` de ${cuenta.presupuesto} €` : ""} · hace ${min < 60 ? min + " min" : Math.round(min / 60) + " h"} · toca para seguir`;
     aviso.classList.remove("oculto");
   } else aviso.classList.add("oculto");
+
+  // aviso de encargo a medias (borrador guardado)
+  const avB = document.getElementById("aviso-borrador");
+  const borrador = leer("borrador-encargo", null);
+  const hayBorrador = borrador && Object.values(borrador).some((v) => v);
+  if (hayBorrador && editandoId == null) {
+    const pista = borrador.que || borrador.texto || borrador.quien || "";
+    avB.textContent = `✎ Tienes un encargo a medias${pista ? ` · "${pista.slice(0, 30)}"` : ""} · toca para seguir`;
+    avB.classList.remove("oculto");
+  } else avB.classList.add("oculto");
 
   // encargos: pendientes primero por fecha; hechos de hoy al final
   const cont = document.getElementById("lista-encargos");
@@ -280,7 +305,11 @@ function pintarInicio() {
   for (const e of pendientes) {
     const dia = e.fecha || "sin-fecha";
     if (dia !== ultimoDia) {
-      const etiqueta = !e.fecha ? "⚠ Sin fecha" : e.fecha === hoyISO() ? `Hoy, ${fechaLarga(e.fecha).toLowerCase()}` : e.fecha === mananaISO() ? `Mañana, ${fechaLarga(e.fecha).toLowerCase()}` : fechaLarga(e.fecha).toLowerCase();
+      const etiqueta = !e.fecha ? "⚠ Sin fecha"
+        : e.fecha < hoyISO() ? `⚠ Atrasado · ${fechaLarga(e.fecha).toLowerCase()}`
+        : e.fecha === hoyISO() ? `Hoy, ${fechaLarga(e.fecha).toLowerCase()}`
+        : e.fecha === mananaISO() ? `Mañana, ${fechaLarga(e.fecha).toLowerCase()}`
+        : fechaLarga(e.fecha).toLowerCase();
       html += `<div class="dia-cabecera">${etiqueta}</div>`;
       ultimoDia = dia;
     }
@@ -302,22 +331,42 @@ function faltas(e) {
 }
 function tarjetaEncargo(e) {
   const f = faltas(e);
-  const urgente = e.fecha === hoyISO() && e.estado !== "hecho";
+  const urgente = e.fecha && e.fecha <= hoyISO() && e.estado !== "hecho"; // hoy o atrasado
   return `<div class="tarjeta-encargo ${urgente ? "urgente" : ""} ${e.estado === "hecho" ? "hecho" : ""}" onclick="verEncargo(${e.id})">
-    <div class="titulo">${e.que || "Encargo"}${e.importe ? " · " + e.importe + " €" : ""}${e.hora ? " · antes de las " + e.hora : ""}</div>
-    <div class="sub">${[e.entrega, e.quien, e.direccion].filter(Boolean).join(" · ") || "&nbsp;"}</div>
+    <div class="titulo">${esc(e.que || "Encargo")}${e.importe ? " · " + esc(e.importe) + " €" : ""}${e.hora ? " · antes de las " + esc(e.hora) : ""}</div>
+    <div class="sub">${[e.entrega, e.quien, e.direccion].filter(Boolean).map(esc).join(" · ") || "&nbsp;"}</div>
     ${f.length ? `<div class="falta">⚠ Falta: ${f.join(" ")}</div>` : ""}
   </div>`;
 }
 
 /* ---------- APUNTAR ENCARGO ---------- */
-function nuevoEncargo() {
-  editandoId = null;
+function vaciarFormularioEncargo() {
   ["texto", "que", "importe", "fecha", "hora", "direccion", "quien", "dedicatoria", "cliente"].forEach((c) => (document.getElementById("enc-" + c).value = ""));
   document.getElementById("enc-entrega").value = "";
   document.getElementById("enc-sorpresa").value = "";
   document.getElementById("enc-fecha-larga").textContent = "";
+}
+function cargarBorrador() {
+  const borrador = leer("borrador-encargo", null);
+  if (!borrador || !Object.values(borrador).some((v) => v)) return false;
+  Object.entries(borrador).forEach(([k, v]) => { const el = document.getElementById("enc-" + k); if (el) el.value = v; });
+  document.getElementById("enc-fecha-larga").textContent = fechaLarga(borrador.fecha);
+  return true;
+}
+// "Apuntar encargo": si hay uno a medias, se sigue con él (criterio del 02: "si cierro la
+// app a medio apuntar, al volver sigue ahí"). Vaciar es explícito: el botón "descartar".
+function nuevoEncargo() {
+  editandoId = null;
+  vaciarFormularioEncargo();
+  cargarBorrador();
   ir("pantalla-encargo");
+}
+function seguirBorrador() { nuevoEncargo(); }
+function descartarEncargo() {
+  guardar("borrador-encargo", null);
+  editandoId = null;
+  vaciarFormularioEncargo();
+  ir("pantalla-inicio");
 }
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("enc-fecha").addEventListener("change", (ev) => {
@@ -327,14 +376,11 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("#pantalla-encargo input, #pantalla-encargo textarea, #pantalla-encargo select").forEach((el) => {
     el.addEventListener("input", guardarBorrador);
   });
-  const borrador = leer("borrador-encargo", null);
-  if (borrador && Object.values(borrador).some((v) => v)) {
-    Object.entries(borrador).forEach(([k, v]) => { const el = document.getElementById("enc-" + k); if (el) el.value = v; });
-    document.getElementById("enc-fecha-larga").textContent = fechaLarga(borrador.fecha);
-  }
+  cargarBorrador();
   pintarInicio();
 });
 function guardarBorrador() {
+  if (editandoId != null) return; // editar uno existente no es un borrador nuevo
   const b = {};
   ["texto", "que", "importe", "fecha", "hora", "direccion", "quien", "dedicatoria", "cliente", "entrega", "sorpresa"].forEach((c) => (b[c] = document.getElementById("enc-" + c).value));
   guardar("borrador-encargo", b);
@@ -373,7 +419,7 @@ function verEncargo(id) {
   ];
   const f = faltas(e);
   document.getElementById("detalle-contenido").innerHTML =
-    campos.filter(([, val]) => val).map(([k, val, cls]) => `<div class="detalle-campo"><div class="k">${k}</div><div class="v ${cls || ""}">${val}</div></div>`).join("") +
+    campos.filter(([, val]) => val).map(([k, val, cls]) => `<div class="detalle-campo"><div class="k">${k}</div><div class="v ${cls || ""}">${salto(val)}</div></div>`).join("") +
     (f.length ? `<div class="falta" style="padding:10px 0">⚠ Falta preguntar: ${f.join(" ")}</div>` : "");
   document.getElementById("btn-hecho").classList.toggle("oculto", e.estado === "hecho");
   ir("pantalla-detalle");
@@ -398,8 +444,10 @@ function borrarEncargo() {
 }
 function imprimirTarjeta() {
   const e = encargos.find((x) => x.id === detalleId);
-  let texto = e.dedicatoria;
-  if (!texto) { texto = prompt("No hay dedicatoria apuntada. Escríbela:"); if (!texto) return; e.dedicatoria = texto; guardar("encargos", encargos); }
+  // se puede retocar antes de imprimir (criterio H3 del 02); lo retocado se guarda
+  const texto = prompt(e.dedicatoria ? "Texto de la tarjeta (retócalo si hace falta):" : "No hay dedicatoria apuntada. Escríbela:", e.dedicatoria || "");
+  if (!texto) return;
+  if (texto !== e.dedicatoria) { e.dedicatoria = texto; guardar("encargos", encargos); verEncargo(e.id); }
   let zona = document.getElementById("zona-impresion");
   if (!zona) { zona = document.createElement("div"); zona.id = "zona-impresion"; document.body.appendChild(zona); }
   zona.textContent = texto;
@@ -428,9 +476,18 @@ function cerrarCuenta() {
 }
 // El precio se mira en el catálogo AL PINTAR, no al añadir: así, si Belén pone
 // precios después de dictar, la cuenta se actualiza sola.
+// Si la línea era una palabra desconocida (sin florId) y Belén la añade luego a Tus flores,
+// también se resuelve: por nombre o alias.
+function florDeLinea(l) {
+  if (l.florId != null) { const f = catalogo.find((x) => x.id === l.florId); if (f) return f; }
+  // tolerante al plural: "celosias" encuentra "celosia" y al revés
+  const raiz = (s) => normalizar(s).replace(/(es|s)$/, "");
+  const n = raiz(l.articulo || "");
+  return n ? catalogo.find((x) => raiz(x.nombre) === n || (x.alias || []).some((a) => raiz(a) === n)) : null;
+}
 function lineasConPrecios() {
   return cuenta.lineas.map((l) => {
-    const f = l.florId != null ? catalogo.find((x) => x.id === l.florId) : null;
+    const f = florDeLinea(l);
     return { ...l, precioMin: f?.precioMin ?? l.precioMin ?? null, precioMax: f?.precioMax ?? l.precioMax ?? null };
   });
 }
@@ -442,7 +499,7 @@ function pintarCuenta() {
     cont.innerHTML = '<p class="vacio">Nada todavía. Mantén pulsado el botón y di lo que metes.</p>';
   } else {
     cont.innerHTML = lineas.map((l, i) =>
-      `<div class="linea"><span class="cant">${l.cantidad ?? "~"}</span><span class="arti">${l.articulo}${l.unidad ? " (" + l.unidad + ")" : ""}${l.precioMin == null ? ` <span class="sinprecio" onclick="irAFlor('${(l.articulo || "").replace(/'/g, "")}')">sin precio · ponerlo</span>` : ""}</span><button onclick="quitarLinea(${i})">✕</button></div>`
+      `<div class="linea"><span class="cant">${l.cantidad ?? "~"}</span><span class="arti">${esc(l.articulo)}${l.unidad ? " (" + l.unidad + ")" : ""}${l.precioMin == null ? ` <span class="sinprecio" onclick="irAFlor(cuenta.lineas[${i}].articulo)">sin precio · ponerlo</span>` : ""}</span><button onclick="quitarLinea(${i})">✕</button></div>`
     ).join("");
   }
   // barra
@@ -540,7 +597,7 @@ function pintarFlores() {
     .filter(({ f }) => !q || normalizar(f.nombre).includes(q) || (f.alias || []).some((a) => normalizar(a).includes(q)));
 
   if (!visibles.length) {
-    document.getElementById("lista-flores").innerHTML = `<p class="vacio">Nada con "${q}". Puedes añadirla abajo.</p>`;
+    document.getElementById("lista-flores").innerHTML = `<p class="vacio">Nada con "${esc(q)}". Puedes añadirla abajo.</p>`;
     return;
   }
   // agrupadas con cabecera cuando se ven "todas" sin búsqueda
@@ -549,14 +606,18 @@ function pintarFlores() {
     const g = f.grupo || "mías";
     if (grupoActivo === "todas" && !q && g !== ultimo) { html += `<div class="dia-cabecera">${g}</div>`; ultimo = g; }
     html += `<div class="flor-fila">
-      <input class="nombre" value="${f.nombre}" onchange="catalogo[${i}].nombre=this.value.toLowerCase().trim();guardar('catalogo',catalogo)">
-      <input class="precio" inputmode="decimal" placeholder="de" value="${f.precioMin ?? ""}" onchange="catalogo[${i}].precioMin=parseFloat(this.value)||null;guardar('catalogo',catalogo)">
+      <input class="nombre" value="${esc(f.nombre)}" onchange="catalogo[${i}].nombre=this.value.toLowerCase().trim();guardar('catalogo',catalogo)">
+      <input class="precio" inputmode="decimal" placeholder="de" value="${f.precioMin ?? ""}" onchange="catalogo[${i}].precioMin=num(this.value);guardar('catalogo',catalogo)">
       <span class="guion">–</span>
-      <input class="precio" inputmode="decimal" placeholder="a" value="${f.precioMax ?? ""}" onchange="catalogo[${i}].precioMax=parseFloat(this.value)||null;guardar('catalogo',catalogo)">
-      <button onclick="if(confirm('¿Quitar ${f.nombre}?')){catalogo.splice(${i},1);guardar('catalogo',catalogo);pintarFlores()}">✕</button>
+      <input class="precio" inputmode="decimal" placeholder="a" value="${f.precioMax ?? ""}" onchange="catalogo[${i}].precioMax=num(this.value);guardar('catalogo',catalogo)">
+      <button class="quitar" onclick="quitarFlor(${i})" aria-label="quitar ${esc(f.nombre)}">✕</button>
     </div>`;
   }
   document.getElementById("lista-flores").innerHTML = html;
+}
+function quitarFlor(i) {
+  if (!confirm(`¿Quitar ${catalogo[i].nombre}?`)) return;
+  catalogo.splice(i, 1); guardar("catalogo", catalogo); pintarFlores();
 }
 function anadirFlor() {
   const q = document.getElementById("buscar-flor")?.value.trim();
@@ -568,7 +629,7 @@ function anadirFlor() {
   pintarFlores();
 }
 function exportarTodo() {
-  const datos = { encargos, catalogo, tirado, cuentasCerradas: leer("cuentas-cerradas", []), exportado: new Date().toISOString() };
+  const datos = { encargos, catalogo, tirado, cuentasCerradas: leer("cuentas-cerradas", []), cuentaAbierta: cuenta, borradorEncargo: leer("borrador-encargo", null), version: VERSION, exportado: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(datos, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -579,8 +640,9 @@ function exportarTodo() {
 /* ---------- versión y novedades ---------- */
 // Subir VERSION en cada despliegue y contar en NOVEDADES qué cambia, en las palabras de
 // Belén: es lo que verá en el aviso al abrir la app tras actualizarse.
-const VERSION = "2026-09-23.6";
+const VERSION = "2026-09-23.7";
 const NOVEDADES = {
+  "2026-09-23.7": "Arreglos en la cuenta: \"quita una hortensia\" quita una (no todas), \"tres rosas más\" y \"no, quita una\" ya se entienden. Si dejas un encargo a medias, en el inicio sale para seguirlo. Los precios aceptan coma (4,5). Botones más grandes.",
   "2026-09-23.6": "Barra de abajo para ir a Inicio, Flores, Histórico y Ajustes. Las actualizaciones se instalan solas y te avisan. En la cuenta, toca \"sin precio\" para ponérselo a una flor.",
   "2026-09-23.5": "Botón \"se tira algo\" en el inicio: apunta lo que tiras en dos toques y el histórico te dice cuánto dinero se ha ido al mes.",
   "2026-09-23.4": "Buscador y secciones en Tus flores.",
@@ -594,8 +656,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // La versión "vista" se guarda al CERRAR el aviso, no al cargar: justo tras un despliegue
   // la app se recarga dos veces (la segunda la provoca el service worker nuevo) y si se
   // guardara al cargar, el aviso desaparecería antes de que nadie lo viera.
+  // "version-vista" no existía antes de la .6: si no está pero ya hay datos guardados, es
+  // una usuaria de una versión anterior y también merece el aviso.
   const vista = leer("version-vista", null);
-  if (!vista) guardar("version-vista", VERSION); // primera instalación: nada que anunciar
+  const yaUsaba = localStorage.getItem("encargos") || localStorage.getItem("catalogo") || localStorage.getItem("cuentas-cerradas");
+  if (!vista && !yaUsaba) guardar("version-vista", VERSION); // primera instalación: nada que anunciar
   else if (vista !== VERSION) {
     const av = document.getElementById("aviso-novedades");
     av.innerHTML = `<b>✓ App actualizada</b><br>${NOVEDADES[VERSION] || "Pequeños arreglos."}<br><small>toca para cerrar</small>`;
@@ -611,18 +676,20 @@ document.addEventListener("DOMContentLoaded", () => {
 // (dictando un centro, rellenando un encargo), no le cortamos: aviso discreto y se instala
 // al volver al inicio. Además comprobamos si hay versión nueva cada vez que la app vuelve
 // al frente y cada 20 min, porque una PWA instalada puede pasar días sin "abrirse".
-let actualizacionPendiente = false;
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").then((reg) => {
-    reg.addEventListener("updatefound", () => {
-      const nuevo = reg.installing;
-      nuevo?.addEventListener("statechange", () => {
+    const vigilar = (nuevo) => {
+      if (!nuevo) return;
+      nuevo.addEventListener("statechange", () => {
         if (nuevo.state !== "activated" || !navigator.serviceWorker.controller) return;
         const activa = document.querySelector(".pantalla.activa")?.id;
-        if (PRINCIPALES.includes(activa)) location.reload();
+        if (PRINCIPALES.includes(activa)) recargarSinPerderNada();
         else { actualizacionPendiente = true; document.getElementById("aviso-actualizacion").classList.remove("oculto"); }
       });
-    });
+    };
+    // el updatefound de esta misma carga puede haber saltado antes de resolverse register()
+    vigilar(reg.installing);
+    reg.addEventListener("updatefound", () => vigilar(reg.installing));
     const comprobar = () => reg.update().catch(() => {});
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") comprobar(); });
     setInterval(comprobar, 20 * 60 * 1000);
