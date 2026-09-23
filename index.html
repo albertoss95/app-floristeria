@@ -21,7 +21,21 @@
 
   <h2>Encargos apuntados</h2>
   <div id="lista-encargos"></div>
-  <button class="btn-plano" onclick="ir('pantalla-historico')">ver histórico</button>
+  <div class="fila-planos">
+    <button class="btn-plano" onclick="ir('pantalla-historico')">ver histórico</button>
+    <button class="btn-plano" onclick="abrirTirar()">🗑 se tira algo</button>
+  </div>
+</section>
+
+<!-- ============ SE TIRA (instrumento: lo que se va a la basura) ============ -->
+<section id="pantalla-tirar" class="pantalla">
+  <header><button class="btn-icono" onclick="ir('pantalla-inicio')">←</button><h1>Se tira</h1></header>
+  <p class="ayuda">Cuando tires flor, búscala y toca cuántas. Dos toques. Al mes verás cuánto dinero se ha ido.</p>
+  <input id="buscar-tirar" type="search" placeholder="🔍 qué se tira…" oninput="pintarTirar()" autocomplete="off">
+  <div id="tirar-ok" class="respuesta oculto"></div>
+  <div id="lista-tirar"></div>
+  <h2>Hoy</h2>
+  <div id="tirado-hoy"></div>
 </section>
 
 <!-- ============ APUNTAR ENCARGO (formulario) ============ -->
@@ -111,6 +125,8 @@
   <div id="historico-cuentas"></div>
   <h2>Encargos pasados</h2>
   <div id="historico-encargos"></div>
+  <h2>Lo que se ha tirado</h2>
+  <div id="historico-tirado"></div>
 </section>
 
 <!-- ============ FLORES (catálogo) ============ -->

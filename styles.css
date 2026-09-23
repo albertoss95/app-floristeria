@@ -198,3 +198,16 @@ input:focus, textarea:focus, select:focus {
 }
 .chip.on { background: var(--verde); border-color: var(--verde); color: #fff; }
 .flor-fila .guion { color: #b9b9ad; font-weight: 700; }
+
+/* ---------- se tira ---------- */
+.fila-planos { display: flex; } .fila-planos .btn-plano { flex: 1; }
+#buscar-tirar { margin: 6px 0 10px; border-radius: 14px; box-shadow: var(--sombra); font-size: 1.05rem; }
+.tirar-fila {
+  background: var(--crema-tarjeta); border: 1px solid var(--borde); border-radius: 14px;
+  padding: 10px 12px; margin: 8px 0; box-shadow: var(--sombra);
+}
+.tirar-fila .nombre { display: block; font-weight: 700; margin-bottom: 7px; }
+.tirar-fila .nombre small { color: var(--tinta-suave); font-weight: 600; }
+.tirar-fila .cantidades { display: flex; gap: 6px; flex-wrap: wrap; }
+.tirar-fila .cantidades .chip { padding: 9px 0; min-width: 46px; text-align: center; color: var(--terracota); border-color: #f0d9cf; }
+.tirar-fila .cantidades .chip:active { background: var(--terracota); color: #fff; }

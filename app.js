@@ -93,6 +93,7 @@ let catalogo = leer("catalogo", CATALOGO_POR_DEFECTO);
   }
   if (cambios) guardar("catalogo", catalogo);
 })();
+let tirado = leer("tirado", []); // [{ts, florId, nombre, cantidad}] — lo que se va a la basura
 let cuenta = leer("cuenta-abierta", null); // {presupuesto, lineas, abierta}
 let editandoId = null;
 let detalleId = null;
@@ -104,7 +105,100 @@ function ir(id) {
   if (id === "pantalla-inicio") pintarInicio();
   if (id === "pantalla-flores") pintarFlores();
   if (id === "pantalla-historico") pintarHistorico();
+  if (id === "pantalla-tirar") pintarTirar();
   window.scrollTo(0, 0);
+}
+
+/* ---------- SE TIRA (instrumento, no función: convierte la merma en euros) ---------- */
+// El precio se lee del catálogo al pintar, como en la cuenta: si Belén pone precios
+// más tarde, lo tirado de antes también se valora.
+function precioDe(t) {
+  const f = catalogo.find((x) => x.id === t.florId) || catalogo.find((x) => x.nombre === t.nombre);
+  return { precioMin: f?.precioMin ?? null, precioMax: f?.precioMax ?? null, unidad: f?.unidad || "tallos" };
+}
+function textoEuros(t) {
+  return (t.min || t.max) ? `≈ ${Math.round(t.min)}–${Math.round(t.max)} €` : "";
+}
+function abrirTirar() {
+  const b = document.getElementById("buscar-tirar"); if (b) b.value = "";
+  ir("pantalla-tirar");
+  setTimeout(() => b?.focus(), 50);
+}
+function pintarTirar() {
+  const q = normalizar(document.getElementById("buscar-tirar")?.value || "");
+  // sin búsqueda: primero lo que más se tira (lo tendrá a un toque), luego el resto por grupo
+  const veces = new Map();
+  for (const t of tirado) veces.set(t.florId, (veces.get(t.florId) || 0) + 1);
+  const orden = (f) => GRUPOS.indexOf(f.grupo || "mías");
+  const visibles = catalogo
+    .filter((f) => !q || normalizar(f.nombre).includes(q) || (f.alias || []).some((a) => normalizar(a).includes(q)))
+    .sort((a, b) => (veces.get(b.id) || 0) - (veces.get(a.id) || 0) || orden(a) - orden(b) || a.nombre.localeCompare(b.nombre, "es"))
+    .slice(0, q ? 20 : 12);
+
+  const cantidades = [1, 2, 3, 5, 10];
+  document.getElementById("lista-tirar").innerHTML = visibles.length
+    ? visibles.map((f) => `<div class="tirar-fila">
+        <span class="nombre">${f.nombre}${f.unidad ? ` <small>(${f.unidad})</small>` : ""}</span>
+        <div class="cantidades">${cantidades.map((n) => `<button class="chip" onclick="apuntarTirado(${f.id}, ${n})">${n}</button>`).join("")}<button class="chip" onclick="apuntarTirado(${f.id}, null)">otra</button></div>
+      </div>`).join("")
+    : `<p class="vacio">Nada con "${q}". <a href="#" onclick="anadirFlorDesdeTirar();return false">Añadir "${q}"</a></p>`;
+
+  // lo de hoy, con deshacer
+  const hoy = hoyISO();
+  const deHoy = tirado.map((t, i) => ({ t, i })).filter(({ t }) => t.ts.slice(0, 10) === hoy).reverse();
+  const total = totalCuenta(deHoy.map(({ t }) => ({ cantidad: t.cantidad, ...precioDe(t) })));
+  document.getElementById("tirado-hoy").innerHTML = deHoy.length
+    ? `<p class="ayuda" style="margin:0 0 6px">${deHoy.reduce((s, { t }) => s + t.cantidad, 0)} en total ${textoEuros(total) ? "· " + textoEuros(total) : ""}</p>` +
+      deHoy.map(({ t, i }) => `<div class="flor-fila"><span class="nombre" style="flex:2;padding:8px;font-weight:600">${t.cantidad} ${t.nombre}</span><button onclick="tirado.splice(${i},1);guardar('tirado',tirado);pintarTirar()" title="deshacer">✕</button></div>`).join("")
+    : '<p class="vacio">Hoy nada, bien.</p>';
+}
+function apuntarTirado(florId, cantidad) {
+  const f = catalogo.find((x) => x.id === florId); if (!f) return;
+  if (cantidad == null) {
+    const v = parseInt(prompt(`¿Cuántas ${f.nombre} se tiran?`, ""), 10);
+    if (!v || v < 1) return; cantidad = v;
+  }
+  tirado.push({ ts: new Date().toISOString(), florId, nombre: f.nombre, cantidad });
+  guardar("tirado", tirado);
+  const ok = document.getElementById("tirar-ok");
+  const e = textoEuros(totalCuenta([{ cantidad, ...precioDe({ florId }) }]));
+  ok.textContent = `✓ ${cantidad} ${f.nombre} → se tira ${e ? "(" + e + ")" : ""}`;
+  ok.classList.remove("oculto");
+  clearTimeout(ok._t); ok._t = setTimeout(() => ok.classList.add("oculto"), 2200);
+  document.getElementById("buscar-tirar").value = "";
+  pintarTirar();
+}
+function anadirFlorDesdeTirar() {
+  const nombre = (document.getElementById("buscar-tirar")?.value || "").toLowerCase().trim(); if (!nombre) return;
+  catalogo.push({ id: Date.now(), nombre, alias: [], grupo: "mías", precioMin: null, precioMax: null });
+  guardar("catalogo", catalogo);
+  pintarTirar();
+}
+function pintarHistoricoTirado() {
+  // por mes, el más reciente primero: cuántos tallos y cuántos euros, y qué es lo que más se tira
+  const meses = new Map();
+  for (const t of tirado) {
+    const k = t.ts.slice(0, 7);
+    if (!meses.has(k)) meses.set(k, []);
+    meses.get(k).push(t);
+  }
+  const claves = [...meses.keys()].sort().reverse();
+  const cont = document.getElementById("historico-tirado");
+  if (!claves.length) { cont.innerHTML = '<p class="vacio">Nada apuntado. Está en "se tira algo", en la pantalla de inicio.</p>'; return; }
+  cont.innerHTML = claves.map((k) => {
+    const items = meses.get(k);
+    const [y, m] = k.split("-");
+    const total = totalCuenta(items.map((t) => ({ cantidad: t.cantidad, ...precioDe(t) })));
+    const n = items.reduce((s, t) => s + t.cantidad, 0);
+    const porFlor = new Map();
+    for (const t of items) porFlor.set(t.nombre, (porFlor.get(t.nombre) || 0) + t.cantidad);
+    const top = [...porFlor.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([nom, c]) => `${c} ${nom}`).join(", ");
+    const sinPrecio = total.sinPrecio ? ` · ${total.sinPrecio} sin precio en Tus flores` : "";
+    return `<div class="tarjeta-encargo hecho" style="opacity:1">
+      <div class="titulo">${MESES[parseInt(m, 10) - 1]} ${y} · ${n} tirados ${textoEuros(total) ? "· " + textoEuros(total) : ""}</div>
+      <div class="sub">${top}${sinPrecio}</div>
+    </div>`;
+  }).join("");
 }
 
 /* ---------- HISTÓRICO ---------- */
@@ -134,6 +228,8 @@ function pintarHistorico() {
   document.getElementById("historico-encargos").innerHTML = pasados.length
     ? pasados.map(tarjetaEncargo).join("")
     : '<p class="vacio">Todavía ninguno.</p>';
+
+  pintarHistoricoTirado();
 }
 
 /* ---------- utilidades de fecha ---------- */
@@ -457,7 +553,7 @@ function anadirFlor() {
   pintarFlores();
 }
 function exportarTodo() {
-  const datos = { encargos, catalogo, cuentasCerradas: leer("cuentas-cerradas", []), exportado: new Date().toISOString() };
+  const datos = { encargos, catalogo, tirado, cuentasCerradas: leer("cuentas-cerradas", []), exportado: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(datos, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -479,7 +575,7 @@ if ("serviceWorker" in navigator) {
 }
 
 /* ---------- versión visible (para saber qué tiene instalado cada móvil) ---------- */
-const VERSION = "2026-09-23.4";
+const VERSION = "2026-09-23.5";
 document.addEventListener("DOMContentLoaded", () => {
   const v = document.getElementById("version"); if (v) v.textContent = "v " + VERSION;
 });
