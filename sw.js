@@ -2,8 +2,8 @@
 // Estrategia "red primero, caché de respaldo": con red se sirve la versión más reciente
 // (y se actualiza la caché); sin red, se sirve lo último que se cacheó.
 // Subir el número de versión en cada despliegue fuerza la limpieza de cachés viejas.
-const CACHE = "floristeria-v10";
-const FICHEROS = ["./", "./index.html", "./styles.css", "./app.js", "./parser.js", "./manifest.json"];
+const CACHE = "floristeria-v11";
+const FICHEROS = ["./", "./index.html", "./styles.css", "./app.js", "./parser.js", "./manifest.json", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FICHEROS)));

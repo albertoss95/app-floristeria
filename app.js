@@ -149,6 +149,17 @@ function abrirTirar() {
   setTimeout(() => b?.focus(), 50);
 }
 function pintarTirar() {
+  // arriba, el dato que justifica apuntar: lo que va de mes
+  const mes = hoyISO().slice(0, 7);
+  const delMes = tirado.filter((t) => isoLocal(new Date(t.ts)).slice(0, 7) === mes);
+  const tm = totalCuenta(delMes.map((t) => ({ cantidad: t.cantidad, ...precioDe(t) })));
+  const nm = delMes.reduce((s, t) => s + t.cantidad, 0);
+  const porFlor = new Map(); for (const t of delMes) porFlor.set(t.nombre, (porFlor.get(t.nombre) || 0) + t.cantidad);
+  const peor = [...porFlor.entries()].sort((a, b) => b[1] - a[1])[0];
+  document.getElementById("tirado-mes").innerHTML = nm
+    ? `<div class="titulo">Este mes: ${nm} tallos${textoEuros(tm) ? " · " + textoEuros(tm) + " a la basura" : ""}</div><div class="sub">${peor ? `La que más se pierde: ${esc(peor[0])} (${peor[1]})` : ""}</div>`
+    : `<div class="titulo">Este mes no has apuntado nada tirado</div><div class="sub">El resumen por meses está en Histórico.</div>`;
+
   const q = normalizar(document.getElementById("buscar-tirar")?.value || "").replace(/,/g, "");
   // sin búsqueda: primero lo que más se tira (lo tendrá a un toque), luego el resto por grupo
   const veces = new Map();
@@ -174,7 +185,7 @@ function pintarTirar() {
   document.getElementById("tirado-hoy").innerHTML = deHoy.length
     ? `<p class="ayuda" style="margin:0 0 6px">${deHoy.reduce((s, { t }) => s + t.cantidad, 0)} en total ${textoEuros(total) ? "· " + textoEuros(total) : ""}</p>` +
       deHoy.map(({ t, i }) => `<div class="flor-fila"><span class="nombre" style="flex:2;padding:8px;font-weight:600">${t.cantidad} ${esc(t.nombre)}</span><button onclick="tirado.splice(${i},1);guardar('tirado',tirado);pintarTirar()" title="deshacer">✕</button></div>`).join("")
-    : '<p class="vacio">Hoy nada, bien.</p>';
+    : '<p class="vacio">Hoy no has tirado nada. 🌿</p>';
 }
 function apuntarTirado(florId, cantidad) {
   const f = catalogo.find((x) => x.id === florId); if (!f) return;
@@ -186,7 +197,7 @@ function apuntarTirado(florId, cantidad) {
   guardar("tirado", tirado);
   const ok = document.getElementById("tirar-ok");
   const e = textoEuros(totalCuenta([{ cantidad, ...precioDe({ florId }) }]));
-  ok.textContent = `✓ ${cantidad} ${f.nombre} → se tira ${e ? "(" + e + ")" : ""}`;
+  ok.textContent = `✓ ${cantidad} ${f.nombre} tiradas ${e ? "(" + e + " a la basura)" : ""}`;
   ok.classList.remove("oculto");
   clearTimeout(ok._t); ok._t = setTimeout(() => ok.classList.add("oculto"), 2200);
   document.getElementById("buscar-tirar").value = "";
@@ -208,7 +219,7 @@ function pintarHistoricoTirado() {
   }
   const claves = [...meses.keys()].sort().reverse();
   const cont = document.getElementById("historico-tirado");
-  if (!claves.length) { cont.innerHTML = '<p class="vacio">Nada apuntado. Está en "se tira algo", en la pantalla de inicio.</p>'; return; }
+  if (!claves.length) { cont.innerHTML = '<p class="vacio">Nada apuntado todavía. Se apunta desde "Apuntar flor tirada", en el inicio.</p>'; return; }
   cont.innerHTML = claves.map((k) => {
     const items = meses.get(k);
     const [y, m] = k.split("-");
@@ -220,7 +231,7 @@ function pintarHistoricoTirado() {
     const tallosSinPrecio = items.filter((t) => precioDe(t).precioMin == null).reduce((s, t) => s + t.cantidad, 0);
     const sinPrecio = tallosSinPrecio ? ` · <a href="#" onclick="ir('pantalla-flores');return false">${tallosSinPrecio} sin precio en Tus flores</a>` : "";
     return `<div class="tarjeta-encargo hecho" style="opacity:1">
-      <div class="titulo">${MESES[parseInt(m, 10) - 1]} ${y} · ${n} tirados ${textoEuros(total) ? "· " + textoEuros(total) : ""}</div>
+      <div class="titulo">${MESES[parseInt(m, 10) - 1]} ${y} · ${n} tallos ${textoEuros(total) ? "· " + textoEuros(total) + " a la basura" : ""}</div>
       <div class="sub">${esc(top)}${sinPrecio}</div>
     </div>`;
   }).join("");
@@ -239,7 +250,7 @@ function pintarHistorico() {
         const t = totalCuenta(c.lineas);
         const importe = (t.min || t.max) ? `≈ ${Math.round(t.min)}–${Math.round(t.max)} €` : "";
         return `<div class="tarjeta-encargo hecho" style="opacity:1">
-          <div class="titulo">${c.presupuesto ? "Presupuesto de " + c.presupuesto + " €" : "Sin presupuesto"} ${importe ? "· " + importe : ""}</div>
+          <div class="titulo">${esc(nombreTrabajo(c))}${c.presupuesto ? " de " + c.presupuesto + " €" : ""} ${importe ? "· " + importe : ""}</div>
           <div class="sub">${fechaCorta(c.cerrada)} · ${esc(c.lineas.map((l) => `${l.cantidad ?? "~"} ${l.articulo}`).join(", "))}</div>
         </div>`;
       }).join("")
@@ -281,7 +292,7 @@ function pintarInicio() {
   const aviso = document.getElementById("aviso-cuenta-abierta");
   if (cuenta) {
     const min = Math.round((Date.now() - cuenta.abierta) / 60000);
-    aviso.textContent = `▲ Tienes un presupuesto abierto${cuenta.presupuesto ? ` de ${cuenta.presupuesto} €` : ""} · hace ${min < 60 ? min + " min" : Math.round(min / 60) + " h"} · toca para seguir`;
+    aviso.textContent = `▲ A medias: ${nombreTrabajo(cuenta).toLowerCase()}${cuenta.presupuesto ? ` de ${cuenta.presupuesto} €` : ""} · hace ${min < 60 ? min + " min" : Math.round(min / 60) + " h"} · toca para seguir`;
     aviso.classList.remove("oculto");
   } else aviso.classList.add("oculto");
 
@@ -457,9 +468,26 @@ function imprimirTarjeta() {
 }
 
 /* ---------- LA CUENTA DEL CENTRO ---------- */
+// Qué se está presupuestando: ramo, centro, corona... Opcional; da nombre al presupuesto
+// en el título y en el histórico. Las palabras son las de Belén.
+const TIPOS_TRABAJO = ["ramo", "centro", "corona", "bouquet", "planta", "otro"];
+let tipoElegido = null;
+function pintarTipos() {
+  document.getElementById("tipos-trabajo").innerHTML = TIPOS_TRABAJO.map((t) =>
+    `<button class="chip ${tipoElegido === t ? "on" : ""}" onclick="tipoElegido = tipoElegido === '${t}' ? null : '${t}'; pintarTipos()">${t}</button>`).join("");
+}
+const nombreTrabajo = (c) => c.tipo ? c.tipo[0].toUpperCase() + c.tipo.slice(1) : "Presupuesto";
 function nuevaCuenta() {
   if (cuenta) { reabrirCuenta(); return; }
+  tipoElegido = null; pintarTipos();
   ir("pantalla-presupuesto");
+}
+function cambiarTipo() {
+  const v = prompt("¿Qué es? (ramo, centro, corona… vacío = sin nombre)", cuenta.tipo || "");
+  if (v === null) return;
+  cuenta.tipo = v.trim().toLowerCase() || null;
+  guardar("cuenta-abierta", cuenta);
+  pintarCuenta();
 }
 // El presupuesto se puede cambiar una vez empezado: tocando el título o la barra
 function cambiarPresupuesto() {
@@ -472,7 +500,7 @@ function cambiarPresupuesto() {
   pintarCuenta();
 }
 function abrirCuenta(presupuesto) {
-  cuenta = { presupuesto, lineas: [], abierta: Date.now() };
+  cuenta = { presupuesto, tipo: tipoElegido, lineas: [], abierta: Date.now() };
   guardar("cuenta-abierta", cuenta);
   grupoCuenta = "todas"; const b = document.getElementById("buscar-cuenta"); if (b) b.value = "";
   pintarCuenta(); ir("pantalla-cuenta");
@@ -505,7 +533,7 @@ function lineasConPrecios() {
   });
 }
 function pintarCuenta() {
-  document.getElementById("cuenta-titulo").innerHTML = (cuenta.presupuesto ? `${cuenta.presupuesto} €` : "Sin presupuesto") + ` <span class="editar">✎</span>`;
+  document.getElementById("cuenta-titulo").innerHTML = `<span class="tipo" onclick="event.stopPropagation();cambiarTipo()">${esc(nombreTrabajo(cuenta))}</span> · ${cuenta.presupuesto ? `${cuenta.presupuesto} €` : "sin tope"} <span class="editar">✎</span>`;
   const lineas = lineasConPrecios();
   const t = totalCuenta(lineas);
   const nTotal = lineas.reduce((s, l) => s + (l.cantidad ?? 0), 0);
@@ -738,8 +766,9 @@ function anadirFlor() {
 /* ---------- versión y novedades ---------- */
 // Subir VERSION en cada despliegue y contar en NOVEDADES qué cambia, en las palabras de
 // Belén: es lo que verá en el aviso al abrir la app tras actualizarse.
-const VERSION = "2026-09-23.10";
+const VERSION = "2026-09-23.11";
 const NOVEDADES = {
+  "2026-09-23.11": "Al empezar un presupuesto puedes decir qué es (ramo, centro, corona…) y así lo verás en el histórico. \"Se tira algo\" ahora se llama \"Apuntar flor tirada\" y te enseña lo que va de mes. Icono nuevo en la pantalla de inicio.",
   "2026-09-23.10": "El botón morado ahora se llama Presupuesto. Una vez empezado, toca el título o la barra para cambiar de cuánto es.",
   "2026-09-23.9": "Calcular centro ahora es tocar: buscas la flor, le das a + y la barra de arriba te dice cuánto llevas. El dictado por voz queda apagado; si quieres probarlo, se enciende en Ajustes.",
   "2026-09-23.7": "Arreglos en la cuenta: \"quita una hortensia\" quita una (no todas), \"tres rosas más\" y \"no, quita una\" ya se entienden. Si dejas un encargo a medias, en el inicio sale para seguirlo. Los precios aceptan coma (4,5). Botones más grandes.",

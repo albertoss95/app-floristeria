@@ -302,3 +302,6 @@ input:focus, textarea:focus, select:focus {
 
 #cuenta-titulo { min-height: 44px; display: flex; align-items: center; gap: 6px; }
 
+#cuenta-titulo .tipo { text-decoration: underline dotted var(--tinta-suave); text-underline-offset: 4px; }
+#tirado-mes { margin-bottom: 8px; }
+

@@ -6,6 +6,12 @@
 <meta name="theme-color" content="#2d7a4f">
 <title>La Floristería</title>
 <link rel="manifest" href="manifest.json">
+<!-- iPhone (la hermana de Belén): Safari ignora el manifest para el icono y el modo app -->
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Floristería">
+<link rel="icon" href="icon-192.png">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -23,14 +29,15 @@
 
   <h2>Encargos apuntados</h2>
   <div id="lista-encargos"></div>
-  <button class="btn-plano" onclick="abrirTirar()">🗑 se tira algo</button>
+  <button class="btn-plano" onclick="abrirTirar()">🗑 Apuntar flor tirada</button>
 </section>
 
-<!-- ============ SE TIRA (instrumento: lo que se va a la basura) ============ -->
+<!-- ============ FLOR TIRADA (instrumento: lo que se va a la basura, en euros) ============ -->
 <section id="pantalla-tirar" class="pantalla">
-  <header><button class="btn-icono" onclick="ir('pantalla-inicio')">←</button><h1>Se tira</h1></header>
-  <p class="ayuda">Cuando tires flor, búscala y toca cuántas. Dos toques. Al mes verás cuánto dinero se ha ido.</p>
-  <input id="buscar-tirar" type="search" placeholder="🔍 qué se tira…" oninput="pintarTirar()" autocomplete="off">
+  <header><button class="btn-icono" onclick="ir('pantalla-inicio')">←</button><h1>Flor tirada</h1></header>
+  <div id="tirado-mes" class="tarjeta-encargo hecho" style="opacity:1"></div>
+  <p class="ayuda">Cuando tires flor que se ha pasado, búscala y toca cuántas. Dos toques. Así sabrás cuánto dinero se va a la basura cada mes y qué flor es la que más se pierde.</p>
+  <input id="buscar-tirar" type="search" placeholder="🔍 qué flor has tirado…" oninput="pintarTirar()" autocomplete="off">
   <div id="tirar-ok" class="respuesta oculto"></div>
   <div id="lista-tirar"></div>
   <h2>Hoy</h2>
@@ -82,7 +89,10 @@
 
 <!-- ============ PRESUPUESTO DE LA CUENTA ============ -->
 <section id="pantalla-presupuesto" class="pantalla">
-  <header><button class="btn-icono" onclick="ir('pantalla-inicio')">←</button><h1>¿De cuánto es?</h1></header>
+  <header><button class="btn-icono" onclick="ir('pantalla-inicio')">←</button><h1>Nuevo presupuesto</h1></header>
+  <label>¿Qué es? <small style="font-weight:500">(opcional)</small></label>
+  <div id="tipos-trabajo" class="chips"></div>
+  <label>¿De cuánto es?</label>
   <div class="rejilla-presupuestos">
     <button onclick="abrirCuenta(30)">30 €</button><button onclick="abrirCuenta(40)">40 €</button>
     <button onclick="abrirCuenta(50)">50 €</button><button onclick="abrirCuenta(60)">60 €</button>
@@ -96,7 +106,7 @@
   <button class="btn-plano" onclick="abrirCuenta(null)">sin presupuesto, solo la lista</button>
 </section>
 
-<!-- ============ LA CUENTA DEL CENTRO ============ -->
+<!-- ============ EL PRESUPUESTO (ramo, centro, corona...) ============ -->
 <section id="pantalla-cuenta" class="pantalla">
   <header>
     <button class="btn-icono" onclick="ir('pantalla-inicio')">←</button>
@@ -134,7 +144,7 @@
   <div id="historico-cuentas"></div>
   <h2>Encargos pasados</h2>
   <div id="historico-encargos"></div>
-  <h2>Lo que se ha tirado</h2>
+  <h2>Flor tirada, por mes</h2>
   <div id="historico-tirado"></div>
 </section>
 
@@ -156,7 +166,7 @@
     <div class="sub" id="ajustes-novedades"></div>
   </div>
   <label class="ajuste-fila">
-    <span>Dictar por voz en la cuenta <small>en pruebas: mantienes pulsado un botón y dices "3 hortensias y 5 rosas"</small></span>
+    <span>Dictar por voz en el presupuesto <small>en pruebas: mantienes pulsado un botón y dices "3 hortensias y 5 rosas"</small></span>
     <input type="checkbox" id="aj-voz" onchange="guardar('voz', this.checked); aplicarVoz()">
   </label>
   <p class="ayuda">Las actualizaciones se instalan solas al abrir la app. Todo lo que apuntas vive solo en este móvil.</p>
