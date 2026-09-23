@@ -466,7 +466,8 @@ function cambiarPresupuesto() {
   const v = prompt("¿De cuánto es el presupuesto? (vacío = sin presupuesto)", cuenta.presupuesto || "");
   if (v === null) return;
   const n = num(v);
-  cuenta.presupuesto = n && n > 0 ? n : null;
+  if (v.trim() !== "" && !(n > 0)) { alert("Pon un número, por ejemplo 50."); return; } // 'abc' o '-20' no borran el presupuesto
+  cuenta.presupuesto = n > 0 ? n : null;
   guardar("cuenta-abierta", cuenta);
   pintarCuenta();
 }
@@ -504,7 +505,7 @@ function lineasConPrecios() {
   });
 }
 function pintarCuenta() {
-  document.getElementById("cuenta-titulo").innerHTML = (cuenta.presupuesto ? `Presupuesto de ${cuenta.presupuesto} €` : "Sin presupuesto") + ` <span class="editar">✎</span>`;
+  document.getElementById("cuenta-titulo").innerHTML = (cuenta.presupuesto ? `${cuenta.presupuesto} €` : "Sin presupuesto") + ` <span class="editar">✎</span>`;
   const lineas = lineasConPrecios();
   const t = totalCuenta(lineas);
   const nTotal = lineas.reduce((s, l) => s + (l.cantidad ?? 0), 0);
@@ -521,7 +522,7 @@ function pintarCuenta() {
     document.getElementById("cuenta-barra-texto").textContent = (hayImporte ? `${rango} de ${cuenta.presupuesto} €` : `0 € de ${cuenta.presupuesto} €`) + sinPrecio;
   } else {
     relleno.style.width = "0";
-    document.getElementById("cuenta-barra-texto").textContent = hayImporte ? `Llevas ${rango}${sinPrecio}` : "Sin presupuesto · toca aquí para ponerlo";
+    document.getElementById("cuenta-barra-texto").textContent = hayImporte ? `Llevas ${rango}${sinPrecio} · sin presupuesto` : "Sin presupuesto · toca aquí para ponerlo";
   }
   // resumen de lo que lleva
   document.getElementById("cuenta-resumen").innerHTML = lineas.length
@@ -537,7 +538,7 @@ function pintarCuenta() {
   const presentes = GRUPOS.filter((g) => catalogo.some((f) => (f.grupo || "mías") === g));
   const chip = (g, txt) => `<button class="chip ${grupoCuenta === g ? "on" : ""}" onclick="grupoCuenta='${g}';pintarCuenta()">${txt}</button>`;
   document.getElementById("grupos-cuenta").innerHTML =
-    chip("todas", "todas") + (enCuenta.size ? chip("en-el-centro", `en el centro · ${enCuenta.size}`) : "") + presentes.map((g) => chip(g, g)).join("");
+    chip("todas", "todas") + (enCuenta.size ? chip("en-el-centro", `elegidas · ${enCuenta.size}`) : "") + presentes.map((g) => chip(g, g)).join("");
 
   const orden = (f) => GRUPOS.indexOf(f.grupo || "mías");
   const visibles = catalogo
@@ -733,14 +734,6 @@ function anadirFlor() {
   document.getElementById("buscar-flor").value = ""; grupoActivo = "todas";
   pintarFlores();
 }
-function exportarTodo() {
-  const datos = { encargos, catalogo, tirado, cuentasCerradas: leer("cuentas-cerradas", []), cuentaAbierta: cuenta, borradorEncargo: leer("borrador-encargo", null), version: VERSION, exportado: new Date().toISOString() };
-  const blob = new Blob([JSON.stringify(datos, null, 2)], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `floristeria-copia-${hoyISO()}.json`;
-  a.click();
-}
 
 /* ---------- versión y novedades ---------- */
 // Subir VERSION en cada despliegue y contar en NOVEDADES qué cambia, en las palabras de
@@ -801,16 +794,4 @@ if ("serviceWorker" in navigator) {
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") comprobar(); });
     setInterval(comprobar, 20 * 60 * 1000);
   }).catch(() => {});
-}
-
-async function forzarActualizacion() {
-  if ("serviceWorker" in navigator) {
-    const regs = await navigator.serviceWorker.getRegistrations();
-    await Promise.all(regs.map((r) => r.unregister()));
-  }
-  if ("caches" in window) {
-    const ks = await caches.keys();
-    await Promise.all(ks.map((k) => caches.delete(k)));
-  }
-  location.reload(true);
 }

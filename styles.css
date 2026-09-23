@@ -300,3 +300,5 @@ input:focus, textarea:focus, select:focus {
 
 #cuenta-titulo { cursor: pointer; } #cuenta-titulo .editar { font-size: .9rem; color: var(--tinta-suave); font-weight: 600; } .barra-presupuesto { cursor: pointer; }
 
+#cuenta-titulo { min-height: 44px; display: flex; align-items: center; gap: 6px; }
+
