@@ -239,7 +239,7 @@ function pintarHistorico() {
         const t = totalCuenta(c.lineas);
         const importe = (t.min || t.max) ? `≈ ${Math.round(t.min)}–${Math.round(t.max)} €` : "";
         return `<div class="tarjeta-encargo hecho" style="opacity:1">
-          <div class="titulo">${c.presupuesto ? "Centro de " + c.presupuesto + " €" : "Centro"} ${importe ? "· " + importe : ""}</div>
+          <div class="titulo">${c.presupuesto ? "Presupuesto de " + c.presupuesto + " €" : "Sin presupuesto"} ${importe ? "· " + importe : ""}</div>
           <div class="sub">${fechaCorta(c.cerrada)} · ${esc(c.lineas.map((l) => `${l.cantidad ?? "~"} ${l.articulo}`).join(", "))}</div>
         </div>`;
       }).join("")
@@ -281,7 +281,7 @@ function pintarInicio() {
   const aviso = document.getElementById("aviso-cuenta-abierta");
   if (cuenta) {
     const min = Math.round((Date.now() - cuenta.abierta) / 60000);
-    aviso.textContent = `▲ Tienes una cuenta abierta${cuenta.presupuesto ? ` de ${cuenta.presupuesto} €` : ""} · hace ${min < 60 ? min + " min" : Math.round(min / 60) + " h"} · toca para seguir`;
+    aviso.textContent = `▲ Tienes un presupuesto abierto${cuenta.presupuesto ? ` de ${cuenta.presupuesto} €` : ""} · hace ${min < 60 ? min + " min" : Math.round(min / 60) + " h"} · toca para seguir`;
     aviso.classList.remove("oculto");
   } else aviso.classList.add("oculto");
 
@@ -461,6 +461,15 @@ function nuevaCuenta() {
   if (cuenta) { reabrirCuenta(); return; }
   ir("pantalla-presupuesto");
 }
+// El presupuesto se puede cambiar una vez empezado: tocando el título o la barra
+function cambiarPresupuesto() {
+  const v = prompt("¿De cuánto es el presupuesto? (vacío = sin presupuesto)", cuenta.presupuesto || "");
+  if (v === null) return;
+  const n = num(v);
+  cuenta.presupuesto = n && n > 0 ? n : null;
+  guardar("cuenta-abierta", cuenta);
+  pintarCuenta();
+}
 function abrirCuenta(presupuesto) {
   cuenta = { presupuesto, lineas: [], abierta: Date.now() };
   guardar("cuenta-abierta", cuenta);
@@ -495,7 +504,7 @@ function lineasConPrecios() {
   });
 }
 function pintarCuenta() {
-  document.getElementById("cuenta-titulo").textContent = cuenta.presupuesto ? `Centro de ${cuenta.presupuesto} €` : "Centro";
+  document.getElementById("cuenta-titulo").innerHTML = (cuenta.presupuesto ? `Presupuesto de ${cuenta.presupuesto} €` : "Sin presupuesto") + ` <span class="editar">✎</span>`;
   const lineas = lineasConPrecios();
   const t = totalCuenta(lineas);
   const nTotal = lineas.reduce((s, l) => s + (l.cantidad ?? 0), 0);
@@ -512,7 +521,7 @@ function pintarCuenta() {
     document.getElementById("cuenta-barra-texto").textContent = (hayImporte ? `${rango} de ${cuenta.presupuesto} €` : `0 € de ${cuenta.presupuesto} €`) + sinPrecio;
   } else {
     relleno.style.width = "0";
-    document.getElementById("cuenta-barra-texto").textContent = hayImporte ? `Llevas ${rango}${sinPrecio}` : "Toca + en lo que metas";
+    document.getElementById("cuenta-barra-texto").textContent = hayImporte ? `Llevas ${rango}${sinPrecio}` : "Sin presupuesto · toca aquí para ponerlo";
   }
   // resumen de lo que lleva
   document.getElementById("cuenta-resumen").innerHTML = lineas.length
@@ -736,8 +745,9 @@ function exportarTodo() {
 /* ---------- versión y novedades ---------- */
 // Subir VERSION en cada despliegue y contar en NOVEDADES qué cambia, en las palabras de
 // Belén: es lo que verá en el aviso al abrir la app tras actualizarse.
-const VERSION = "2026-09-23.9";
+const VERSION = "2026-09-23.10";
 const NOVEDADES = {
+  "2026-09-23.10": "El botón morado ahora se llama Presupuesto. Una vez empezado, toca el título o la barra para cambiar de cuánto es.",
   "2026-09-23.9": "Calcular centro ahora es tocar: buscas la flor, le das a + y la barra de arriba te dice cuánto llevas. El dictado por voz queda apagado; si quieres probarlo, se enciende en Ajustes.",
   "2026-09-23.7": "Arreglos en la cuenta: \"quita una hortensia\" quita una (no todas), \"tres rosas más\" y \"no, quita una\" ya se entienden. Si dejas un encargo a medias, en el inicio sale para seguirlo. Los precios aceptan coma (4,5). Botones más grandes.",
   "2026-09-23.6": "Barra de abajo para ir a Inicio, Flores, Histórico y Ajustes. Las actualizaciones se instalan solas y te avisan. En la cuenta, toca \"sin precio\" para ponérselo a una flor.",

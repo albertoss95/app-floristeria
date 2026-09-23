@@ -16,7 +16,7 @@
   <div id="aviso-novedades" class="aviso-novedades oculto" onclick="this.classList.add('oculto');guardar('version-vista',VERSION)"></div>
 
   <button class="btn-gigante verde" onclick="nuevoEncargo()"><span class="icono">✎</span><span>Apuntar encargo<small>WhatsApp, teléfono o mostrador</small></span></button>
-  <button class="btn-gigante morado" onclick="nuevaCuenta()"><span class="icono">✿</span><span>Calcular centro<small>elige lo que metes y lleva la cuenta</small></span></button>
+  <button class="btn-gigante morado" onclick="nuevaCuenta()"><span class="icono">✿</span><span>Presupuesto<small>elige lo que metes y mira cuánto llevas</small></span></button>
 
   <div id="aviso-cuenta-abierta" class="aviso-cuenta oculto" onclick="reabrirCuenta()"></div>
   <div id="aviso-borrador" class="aviso-cuenta oculto" onclick="seguirBorrador()"></div>
@@ -100,13 +100,13 @@
 <section id="pantalla-cuenta" class="pantalla">
   <header>
     <button class="btn-icono" onclick="ir('pantalla-inicio')">←</button>
-    <h1 id="cuenta-titulo">Centro</h1>
+    <h1 id="cuenta-titulo" onclick="cambiarPresupuesto()" title="tocar para cambiar">Presupuesto</h1>
     <button class="btn-icono" onclick="cerrarCuenta()">✓ cerrar</button>
   </header>
 
   <!-- cabecera pegada arriba: siempre se ve cuánto llevas mientras eliges -->
   <div class="cuenta-cabecera">
-    <div id="cuenta-barra" class="barra-presupuesto">
+    <div id="cuenta-barra" class="barra-presupuesto" onclick="cambiarPresupuesto()">
       <div id="cuenta-barra-relleno"></div><span id="cuenta-barra-texto"></span>
     </div>
     <div id="cuenta-resumen" class="cuenta-resumen"></div>
@@ -130,7 +130,7 @@
 <!-- ============ HISTÓRICO ============ -->
 <section id="pantalla-historico" class="pantalla">
   <header><h1>🕓 Histórico</h1></header>
-  <h2>Centros que has montado</h2>
+  <h2>Presupuestos que has hecho</h2>
   <div id="historico-cuentas"></div>
   <h2>Encargos pasados</h2>
   <div id="historico-encargos"></div>
@@ -159,10 +159,7 @@
     <span>Dictar por voz en la cuenta <small>en pruebas: mantienes pulsado un botón y dices "3 hortensias y 5 rosas"</small></span>
     <input type="checkbox" id="aj-voz" onchange="guardar('voz', this.checked); aplicarVoz()">
   </label>
-  <p class="ayuda">Las actualizaciones se instalan solas cuando abres la app. Si crees que te falta algo, fuerza una aquí.</p>
-  <button class="btn-gigante azul" onclick="forzarActualizacion()">⟳ &nbsp;Buscar actualización</button>
-  <p class="ayuda">Todo lo que apuntas vive solo en este móvil. Guarda una copia de vez en cuando por si lo cambias o lo pierdes.</p>
-  <button class="btn-gigante verde" onclick="exportarTodo()">⬇ &nbsp;Guardar copia de todo</button>
+  <p class="ayuda">Las actualizaciones se instalan solas al abrir la app. Todo lo que apuntas vive solo en este móvil.</p>
 </section>
 
 <!-- ============ BARRA INFERIOR ============ -->

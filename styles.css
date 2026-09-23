@@ -297,3 +297,6 @@ input:focus, textarea:focus, select:focus {
 }
 .ajuste-fila span { flex: 1; } .ajuste-fila small { display: block; font-weight: 500; color: var(--tinta-suave); font-size: .84rem; margin-top: 3px; }
 .ajuste-fila input[type=checkbox] { width: 28px; height: 28px; accent-color: var(--verde); flex-shrink: 0; }
+
+#cuenta-titulo { cursor: pointer; } #cuenta-titulo .editar { font-size: .9rem; color: var(--tinta-suave); font-weight: 600; } .barra-presupuesto { cursor: pointer; }
+
