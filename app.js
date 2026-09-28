@@ -82,14 +82,14 @@ let catalogo = leer("catalogo", CATALOGO_POR_DEFECTO);
       if (nuevos.length) { f.alias = [...(f.alias || []), ...nuevos]; cambios++; }
       if (!f.unidad && ref.unidad) { f.unidad = ref.unidad; cambios++; }
       // si no tenía precio, coge el orientativo; si ya puso uno, ni tocarlo
-      if (f.precio == null && f.precioMin == null && f.precioMax == null && ref.precio != null) {
+      if (!("precio" in f) && f.precioMin == null && f.precioMax == null && ref.precio != null) {
         f.precio = ref.precio; f.aprox = true; cambios++;
       }
     }
     // versiones anteriores guardaban un rango de-a: pasa al punto medio, marcado aprox.
     if (f.precio == null && (f.precioMin != null || f.precioMax != null)) {
       const a = f.precioMin ?? f.precioMax, b = f.precioMax ?? f.precioMin;
-      f.precio = Math.round(((a + b) / 2) * 100) / 100; f.aprox = true; cambios++;
+      f.precio = Math.round(((a + b) / 2) * 100) / 100; f.aprox = !!porNombre.get(f.nombre); cambios++;
     }
     if ("precioMin" in f || "precioMax" in f) { delete f.precioMin; delete f.precioMax; cambios++; }
   }
@@ -98,6 +98,16 @@ let catalogo = leer("catalogo", CATALOGO_POR_DEFECTO);
     if (!tengo.has(f.nombre)) { catalogo.push({ ...f, id: Date.now() + cambios }); cambios++; }
   }
   if (cambios) guardar("catalogo", catalogo);
+})();
+// Historico de la v.11: las lineas llevaban un rango congelado; pasa al punto medio una sola vez
+(function migrarHistorico() {
+  const h = leer("cuentas-cerradas", []); let toc = 0;
+  for (const c of h) for (const l of c.lineas || []) {
+    if (l.precioMin != null && l.precioMax != null && l.precioMin !== l.precioMax) {
+      l.precioMin = l.precioMax = Math.round(((l.precioMin + l.precioMax) / 2) * 100) / 100; toc++;
+    }
+  }
+  if (toc) guardar("cuentas-cerradas", h);
 })();
 let tirado = leer("tirado", []); // [{ts, florId, nombre, cantidad}] — lo que se va a la basura
 let cuenta = leer("cuenta-abierta", null); // {presupuesto, lineas, abierta}
@@ -147,7 +157,7 @@ function precioDe(t) {
   return { precioMin: f?.precio ?? null, precioMax: f?.precio ?? null, unidad: f?.unidad || "tallos" };
 }
 // Euros como los escribe Belén: coma decimal, sin decimales si es entero ("14 €", "13,50 €")
-const euros = (n) => n.toLocaleString("es-ES", { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + " €";
+const euros = (n) => n.toLocaleString("es-ES", { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 }) + " €";
 function textoEuros(t) {
   return t.min > 0 ? euros(t.min) : "";
 }
@@ -555,12 +565,12 @@ function pintarCuenta() {
 
   // barra: siempre visible para que la cabecera no baile; sin presupuesto muestra solo el importe
   const relleno = document.getElementById("cuenta-barra-relleno");
-  const gastado = t.min;
+  const gastado = Math.round(t.min * 100) / 100; // a céntimos: 2,7×4 + 0,8×24 no es 30,000000000000004
   const sinPrecio = t.sinPrecio ? ` (+${t.sinPrecio} sin precio)` : "";
   if (cuenta.presupuesto) {
     relleno.style.width = Math.min(100, (gastado / cuenta.presupuesto) * 100) + "%";
     relleno.classList.toggle("pasado", gastado > cuenta.presupuesto);
-    const resto = cuenta.presupuesto - gastado;
+    const resto = Math.round((cuenta.presupuesto - gastado) * 100) / 100;
     document.getElementById("cuenta-barra-texto").textContent =
       `Llevas ${euros(gastado)} · ${resto >= 0 ? "te quedan " + euros(resto) : euros(-resto) + " de más"}` + sinPrecio;
   } else {
@@ -759,7 +769,7 @@ function pintarFlores() {
     html += `<div class="flor-fila">
       <input class="nombre" value="${esc(f.nombre)}" onchange="catalogo[${i}].nombre=this.value.toLowerCase().trim();guardar('catalogo',catalogo)">
       ${f.aprox && f.precio != null ? '<span class="aprox" title="precio puesto a ojo">aprox.</span>' : ""}
-      <input class="precio" inputmode="decimal" placeholder="€" value="${f.precio ?? ""}" onchange="catalogo[${i}].precio=num(this.value);catalogo[${i}].aprox=false;guardar('catalogo',catalogo);pintarFlores()">
+      <input class="precio" inputmode="decimal" placeholder="€" value="${f.precio ?? ""}" onchange="catalogo[${i}].precio=num(this.value);catalogo[${i}].aprox=false;guardar('catalogo',catalogo);this.parentNode.querySelector('.aprox')?.remove()">
       <span class="unidad">€${f.unidad ? "/" + f.unidad : ""}</span>
       <button class="quitar" onclick="quitarFlor(${i})" aria-label="quitar ${esc(f.nombre)}">✕</button>
     </div>`;
