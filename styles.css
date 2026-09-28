@@ -305,3 +305,9 @@ input:focus, textarea:focus, select:focus {
 #cuenta-titulo .tipo { text-decoration: underline dotted var(--tinta-suave); text-underline-offset: 4px; }
 #tirado-mes { margin-bottom: 8px; }
 
+
+/* ---------- precio unico ---------- */
+.aprox { display: inline-block; font-size: .7rem; font-weight: 700; color: var(--ambar); background: #fbf1e2; border-radius: 99px; padding: 3px 8px; vertical-align: middle; }
+.flor-fila .unidad { color: var(--tinta-suave); font-size: .85rem; font-weight: 600; min-width: 26px; }
+.flor-fila input.precio { width: 72px; }
+

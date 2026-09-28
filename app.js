@@ -8,62 +8,62 @@ const leer = (k, def) => { try { return JSON.parse(localStorage.getItem(k)) ?? d
 let encargos = leer("encargos", []);
 
 // Catálogo por defecto: flores habituales de una floristería de barrio en Madrid.
-// Precio = coste aproximado POR TALLO para la florista (rango de-a, en €), fuera de
-// campaña. ORIENTATIVO: sale de catálogos de mayoristas y precios de mercado de 2026,
-// no de un albarán real. Belén lo corrige desde "Tus flores". En San Valentín o el
-// Día de la Madre la rosa puede doblar o triplicar.
+// Precio = coste aproximado POR TALLO para la florista (en €), fuera de campaña.
+// ORIENTATIVO (aprox: true): sale de catálogos de mayoristas y precios de mercado de 2026,
+// no de un albarán real. En cuanto Belén lo toca deja de ser "aprox.". Antes había un
+// rango de-a; ella no sabía cuál elegir (audio 24/09) y se pasó a un solo precio.
 const CATALOGO_POR_DEFECTO = [
   // rosas
-  { id: 1,  nombre: "rosa", grupo: "rosas",              alias: ["rosas"],                          precioMin: 0.9, precioMax: 1.8 },
-  { id: 2,  nombre: "rosa roja", grupo: "rosas",         alias: [],                                 precioMin: 1.0, precioMax: 2.0 },
-  { id: 3,  nombre: "rosa blanca", grupo: "rosas",       alias: [],                                 precioMin: 0.9, precioMax: 1.8 },
-  { id: 4,  nombre: "rosa rosa", grupo: "rosas",         alias: ["rosa rosada"],                    precioMin: 0.9, precioMax: 1.8 },
-  { id: 5,  nombre: "rosa ramificada", grupo: "rosas",   alias: ["rosa spray", "rosa pitiminí", "pitimini"], precioMin: 1.5, precioMax: 2.5 },
+  { id: 1,  nombre: "rosa", grupo: "rosas",              alias: ["rosas"],                          precio: 1.4, aprox: true },
+  { id: 2,  nombre: "rosa roja", grupo: "rosas",         alias: [],                                 precio: 1.5, aprox: true },
+  { id: 3,  nombre: "rosa blanca", grupo: "rosas",       alias: [],                                 precio: 1.4, aprox: true },
+  { id: 4,  nombre: "rosa rosa", grupo: "rosas",         alias: ["rosa rosada"],                    precio: 1.4, aprox: true },
+  { id: 5,  nombre: "rosa ramificada", grupo: "rosas",   alias: ["rosa spray", "rosa pitiminí", "pitimini"], precio: 2, aprox: true },
   // flor de foco
-  { id: 6,  nombre: "hortensia", grupo: "flor de foco",         alias: ["ortensia", "hortencia", "urtencia"], precioMin: 3.0, precioMax: 6.0 },
-  { id: 7,  nombre: "peonía", grupo: "flor de foco",            alias: ["peonia", "peonias"],              precioMin: 3.0, precioMax: 6.0 },
-  { id: 8,  nombre: "lilium", grupo: "flor de foco",            alias: ["lilio", "lirio", "liliums"],      precioMin: 1.8, precioMax: 3.5 },
-  { id: 9,  nombre: "gerbera", grupo: "flor de foco",           alias: ["gerberas"],                       precioMin: 0.7, precioMax: 1.3 },
-  { id: 10, nombre: "girasol", grupo: "flor de foco",           alias: ["girasoles"],                      precioMin: 1.2, precioMax: 2.2 },
-  { id: 11, nombre: "tulipán", grupo: "flor de foco",           alias: ["tulipan", "tulipanes", "tulipans"], precioMin: 0.6, precioMax: 1.2 },
-  { id: 12, nombre: "anémona", grupo: "flor de foco",           alias: ["anemona", "anemonas"],            precioMin: 1.2, precioMax: 2.2 },
-  { id: 13, nombre: "ranúnculo", grupo: "flor de foco",         alias: ["ranunculo", "ranunculos"],        precioMin: 1.5, precioMax: 3.0 },
-  { id: 14, nombre: "fresia", grupo: "flor de foco",            alias: ["freesia", "fresias"],             precioMin: 0.7, precioMax: 1.3 },
-  { id: 15, nombre: "lisianthus", grupo: "flor de foco",        alias: ["lisiantus", "lisianto"],          precioMin: 1.2, precioMax: 2.2 },
-  { id: 16, nombre: "alstroemeria", grupo: "flor de foco",      alias: ["astromelia", "alstromeria", "astromelias"], precioMin: 0.6, precioMax: 1.2 },
-  { id: 17, nombre: "orquídea", grupo: "flor de foco",          alias: ["orquidea", "orquideas", "cymbidium"], precioMin: 3.0, precioMax: 7.0 },
-  { id: 18, nombre: "anturio", grupo: "flor de foco",           alias: ["anthurium", "anturios"],          precioMin: 2.0, precioMax: 4.0 },
-  { id: 19, nombre: "dalia", grupo: "flor de foco",             alias: ["dalias"],                         precioMin: 1.5, precioMax: 3.0 },
-  { id: 20, nombre: "protea", grupo: "flor de foco",            alias: ["proteas"],                        precioMin: 3.5, precioMax: 7.0 },
+  { id: 6,  nombre: "hortensia", grupo: "flor de foco",         alias: ["ortensia", "hortencia", "urtencia"], precio: 4.5, aprox: true },
+  { id: 7,  nombre: "peonía", grupo: "flor de foco",            alias: ["peonia", "peonias"],              precio: 4.5, aprox: true },
+  { id: 8,  nombre: "lilium", grupo: "flor de foco",            alias: ["lilio", "lirio", "liliums"],      precio: 2.7, aprox: true },
+  { id: 9,  nombre: "gerbera", grupo: "flor de foco",           alias: ["gerberas"],                       precio: 1, aprox: true },
+  { id: 10, nombre: "girasol", grupo: "flor de foco",           alias: ["girasoles"],                      precio: 1.7, aprox: true },
+  { id: 11, nombre: "tulipán", grupo: "flor de foco",           alias: ["tulipan", "tulipanes", "tulipans"], precio: 0.9, aprox: true },
+  { id: 12, nombre: "anémona", grupo: "flor de foco",           alias: ["anemona", "anemonas"],            precio: 1.7, aprox: true },
+  { id: 13, nombre: "ranúnculo", grupo: "flor de foco",         alias: ["ranunculo", "ranunculos"],        precio: 2.3, aprox: true },
+  { id: 14, nombre: "fresia", grupo: "flor de foco",            alias: ["freesia", "fresias"],             precio: 1, aprox: true },
+  { id: 15, nombre: "lisianthus", grupo: "flor de foco",        alias: ["lisiantus", "lisianto"],          precio: 1.7, aprox: true },
+  { id: 16, nombre: "alstroemeria", grupo: "flor de foco",      alias: ["astromelia", "alstromeria", "astromelias"], precio: 0.9, aprox: true },
+  { id: 17, nombre: "orquídea", grupo: "flor de foco",          alias: ["orquidea", "orquideas", "cymbidium"], precio: 5, aprox: true },
+  { id: 18, nombre: "anturio", grupo: "flor de foco",           alias: ["anthurium", "anturios"],          precio: 3, aprox: true },
+  { id: 19, nombre: "dalia", grupo: "flor de foco",             alias: ["dalias"],                         precio: 2.3, aprox: true },
+  { id: 20, nombre: "protea", grupo: "flor de foco",            alias: ["proteas"],                        precio: 5.3, aprox: true },
   // clavel y crisantemo (funeral, cementerio, básicos)
-  { id: 21, nombre: "clavel", grupo: "clavel y funeral",            alias: ["claveles"],                       precioMin: 0.3, precioMax: 0.6 },
-  { id: 22, nombre: "clavel blanco", grupo: "clavel y funeral",     alias: [],                                 precioMin: 0.3, precioMax: 0.6 },
-  { id: 23, nombre: "clavelina", grupo: "clavel y funeral",         alias: ["clavelinas", "mini clavel"],      precioMin: 0.4, precioMax: 0.8 },
-  { id: 24, nombre: "crisantemo", grupo: "clavel y funeral",        alias: ["crisantemos", "margarita"],       precioMin: 0.8, precioMax: 1.6 },
-  { id: 25, nombre: "gladiolo", grupo: "clavel y funeral",          alias: ["gladiolos"],                      precioMin: 0.8, precioMax: 1.5 },
-  { id: 26, nombre: "calla", grupo: "clavel y funeral",             alias: ["cala", "calas", "callas"],        precioMin: 1.5, precioMax: 3.0 },
-  { id: 27, nombre: "delphinium", grupo: "clavel y funeral",        alias: ["delfinium", "espuela"],           precioMin: 1.5, precioMax: 2.5 },
-  { id: 28, nombre: "antirrhinum", grupo: "clavel y funeral",       alias: ["boca de dragon", "dragonaria"],   precioMin: 1.0, precioMax: 1.8 },
+  { id: 21, nombre: "clavel", grupo: "clavel y funeral",            alias: ["claveles"],                       precio: 0.5, aprox: true },
+  { id: 22, nombre: "clavel blanco", grupo: "clavel y funeral",     alias: [],                                 precio: 0.5, aprox: true },
+  { id: 23, nombre: "clavelina", grupo: "clavel y funeral",         alias: ["clavelinas", "mini clavel"],      precio: 0.6, aprox: true },
+  { id: 24, nombre: "crisantemo", grupo: "clavel y funeral",        alias: ["crisantemos", "margarita"],       precio: 1.2, aprox: true },
+  { id: 25, nombre: "gladiolo", grupo: "clavel y funeral",          alias: ["gladiolos"],                      precio: 1.2, aprox: true },
+  { id: 26, nombre: "calla", grupo: "clavel y funeral",             alias: ["cala", "calas", "callas"],        precio: 2.3, aprox: true },
+  { id: 27, nombre: "delphinium", grupo: "clavel y funeral",        alias: ["delfinium", "espuela"],           precio: 2, aprox: true },
+  { id: 28, nombre: "antirrhinum", grupo: "clavel y funeral",       alias: ["boca de dragon", "dragonaria"],   precio: 1.4, aprox: true },
   // relleno
-  { id: 29, nombre: "paniculata", grupo: "relleno",        alias: ["gypsophila", "gipsofila", "velo de novia"], precioMin: 1.5, precioMax: 3.0 },
-  { id: 30, nombre: "limonium", grupo: "relleno",          alias: ["limonio", "estatice", "statice"], precioMin: 1.0, precioMax: 2.0 },
-  { id: 31, nombre: "solidago", grupo: "relleno",          alias: [],                                 precioMin: 0.8, precioMax: 1.5 },
-  { id: 32, nombre: "lavanda", grupo: "relleno",           alias: [],                                 unidad: "manojo", precioMin: 2.0, precioMax: 4.0 },
-  { id: 33, nombre: "wax", grupo: "relleno",               alias: ["waxflower", "flor de cera"],      precioMin: 1.2, precioMax: 2.2 },
+  { id: 29, nombre: "paniculata", grupo: "relleno",        alias: ["gypsophila", "gipsofila", "velo de novia"], precio: 2.3, aprox: true },
+  { id: 30, nombre: "limonium", grupo: "relleno",          alias: ["limonio", "estatice", "statice"], precio: 1.5, aprox: true },
+  { id: 31, nombre: "solidago", grupo: "relleno",          alias: [],                                 precio: 1.2, aprox: true },
+  { id: 32, nombre: "lavanda", grupo: "relleno",           alias: [],                                 unidad: "manojo", precio: 3, aprox: true },
+  { id: 33, nombre: "wax", grupo: "relleno",               alias: ["waxflower", "flor de cera"],      precio: 1.7, aprox: true },
   // verdes (suelen ir por manojo o rama)
-  { id: 34, nombre: "eucalipto", grupo: "verdes",         alias: ["eucaliptus"],                     unidad: "manojo", precioMin: 2.0, precioMax: 4.0 },
-  { id: 35, nombre: "ruscus", grupo: "verdes",            alias: ["rusco"],                          unidad: "manojo", precioMin: 1.5, precioMax: 3.0 },
-  { id: 36, nombre: "aspidistra", grupo: "verdes",        alias: ["aspidistras"],                    precioMin: 0.5, precioMax: 1.0 },
-  { id: 37, nombre: "helecho", grupo: "verdes",           alias: ["helechos", "esparraguera"],       unidad: "manojo", precioMin: 1.5, precioMax: 3.0 },
-  { id: 38, nombre: "monstera", grupo: "verdes",          alias: ["hoja de monstera"],               precioMin: 1.0, precioMax: 2.0 },
-  { id: 39, nombre: "pistacho", grupo: "verdes",          alias: ["lentisco", "pistacia"],           unidad: "manojo", precioMin: 2.0, precioMax: 3.5 },
-  { id: 40, nombre: "beargrass", grupo: "verdes",         alias: ["bear grass"],                     unidad: "manojo", precioMin: 1.5, precioMax: 3.0 },
+  { id: 34, nombre: "eucalipto", grupo: "verdes",         alias: ["eucaliptus"],                     unidad: "manojo", precio: 3, aprox: true },
+  { id: 35, nombre: "ruscus", grupo: "verdes",            alias: ["rusco"],                          unidad: "manojo", precio: 2.3, aprox: true },
+  { id: 36, nombre: "aspidistra", grupo: "verdes",        alias: ["aspidistras"],                    precio: 0.8, aprox: true },
+  { id: 37, nombre: "helecho", grupo: "verdes",           alias: ["helechos", "esparraguera"],       unidad: "manojo", precio: 2.3, aprox: true },
+  { id: 38, nombre: "monstera", grupo: "verdes",          alias: ["hoja de monstera"],               precio: 1.5, aprox: true },
+  { id: 39, nombre: "pistacho", grupo: "verdes",          alias: ["lentisco", "pistacia"],           unidad: "manojo", precio: 2.8, aprox: true },
+  { id: 40, nombre: "beargrass", grupo: "verdes",         alias: ["bear grass"],                     unidad: "manojo", precio: 2.3, aprox: true },
   // materiales
-  { id: 41, nombre: "espuma", grupo: "materiales",            alias: ["oasis", "esponja"],               precioMin: 1.2, precioMax: 2.5 },
-  { id: 42, nombre: "base", grupo: "materiales",              alias: ["base de centro", "recipiente", "cuenco"], precioMin: 2.0, precioMax: 6.0 },
-  { id: 43, nombre: "cinta", grupo: "materiales",             alias: ["cinta de raso", "lazo"],          unidad: "metro", precioMin: 0.3, precioMax: 0.8 },
-  { id: 44, nombre: "papel", grupo: "materiales",             alias: ["papel de envolver", "celofán", "celofan"], precioMin: 0.5, precioMax: 1.5 },
-  { id: 45, nombre: "alambre", grupo: "materiales",           alias: ["alambres"],                       precioMin: 0.1, precioMax: 0.3 },
+  { id: 41, nombre: "espuma", grupo: "materiales",            alias: ["oasis", "esponja"],               precio: 1.9, aprox: true },
+  { id: 42, nombre: "base", grupo: "materiales",              alias: ["base de centro", "recipiente", "cuenco"], precio: 4, aprox: true },
+  { id: 43, nombre: "cinta", grupo: "materiales",             alias: ["cinta de raso", "lazo"],          unidad: "metro", precio: 0.6, aprox: true },
+  { id: 44, nombre: "papel", grupo: "materiales",             alias: ["papel de envolver", "celofán", "celofan"], precio: 1, aprox: true },
+  { id: 45, nombre: "alambre", grupo: "materiales",           alias: ["alambres"],                       precio: 0.2, aprox: true },
 ];
 let catalogo = leer("catalogo", CATALOGO_POR_DEFECTO);
 
@@ -82,10 +82,16 @@ let catalogo = leer("catalogo", CATALOGO_POR_DEFECTO);
       if (nuevos.length) { f.alias = [...(f.alias || []), ...nuevos]; cambios++; }
       if (!f.unidad && ref.unidad) { f.unidad = ref.unidad; cambios++; }
       // si no tenía precio, coge el orientativo; si ya puso uno, ni tocarlo
-      if (f.precioMin == null && f.precioMax == null && ref.precioMin != null) {
-        f.precioMin = ref.precioMin; f.precioMax = ref.precioMax; cambios++;
+      if (f.precio == null && f.precioMin == null && f.precioMax == null && ref.precio != null) {
+        f.precio = ref.precio; f.aprox = true; cambios++;
       }
     }
+    // versiones anteriores guardaban un rango de-a: pasa al punto medio, marcado aprox.
+    if (f.precio == null && (f.precioMin != null || f.precioMax != null)) {
+      const a = f.precioMin ?? f.precioMax, b = f.precioMax ?? f.precioMin;
+      f.precio = Math.round(((a + b) / 2) * 100) / 100; f.aprox = true; cambios++;
+    }
+    if ("precioMin" in f || "precioMax" in f) { delete f.precioMin; delete f.precioMax; cambios++; }
   }
   const tengo = new Set(catalogo.map((f) => f.nombre));
   for (const f of CATALOGO_POR_DEFECTO) {
@@ -138,10 +144,12 @@ function irAFlor(nombre) {
 // más tarde, lo tirado de antes también se valora.
 function precioDe(t) {
   const f = catalogo.find((x) => x.id === t.florId) || catalogo.find((x) => x.nombre === t.nombre);
-  return { precioMin: f?.precioMin ?? null, precioMax: f?.precioMax ?? null, unidad: f?.unidad || "tallos" };
+  return { precioMin: f?.precio ?? null, precioMax: f?.precio ?? null, unidad: f?.unidad || "tallos" };
 }
+// Euros como los escribe Belén: coma decimal, sin decimales si es entero ("14 €", "13,50 €")
+const euros = (n) => n.toLocaleString("es-ES", { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + " €";
 function textoEuros(t) {
-  return (t.min || t.max) ? `≈ ${Math.round(t.min)}–${Math.round(t.max)} €` : "";
+  return t.min > 0 ? euros(t.min) : "";
 }
 function abrirTirar() {
   const b = document.getElementById("buscar-tirar"); if (b) b.value = "";
@@ -205,7 +213,7 @@ function apuntarTirado(florId, cantidad) {
 }
 function anadirFlorDesdeTirar() {
   const nombre = (document.getElementById("buscar-tirar")?.value || "").toLowerCase().replace(/,/g, "").trim(); if (!nombre) return;
-  catalogo.push({ id: Date.now(), nombre, alias: [], grupo: "mías", precioMin: null, precioMax: null });
+  catalogo.push({ id: Date.now(), nombre, alias: [], grupo: "mías", precio: null });
   guardar("catalogo", catalogo);
   pintarTirar();
 }
@@ -247,8 +255,8 @@ function pintarHistorico() {
   const cuentas = leer("cuentas-cerradas", []).slice().reverse();
   document.getElementById("historico-cuentas").innerHTML = cuentas.length
     ? cuentas.map((c) => {
-        const t = totalCuenta(c.lineas);
-        const importe = (t.min || t.max) ? `≈ ${Math.round(t.min)}–${Math.round(t.max)} €` : "";
+        const t = totalCuenta(c.lineas.map((l) => l.precioMin != null ? l : conPrecios([l])[0]));
+        const importe = textoEuros(t);
         return `<div class="tarjeta-encargo hecho" style="opacity:1">
           <div class="titulo">${esc(nombreTrabajo(c))}${c.presupuesto ? " de " + c.presupuesto + " €" : " sin presupuesto"} ${importe ? "· " + importe : ""}</div>
           <div class="sub">${fechaCorta(c.cerrada)} · ${esc(c.lineas.map((l) => `${l.cantidad ?? "~"} ${l.articulo}`).join(", "))}</div>
@@ -514,7 +522,7 @@ function reabrirCuenta() { grupoCuenta = "todas"; const b = document.getElementB
 function cerrarCuenta() {
   if (cuenta && cuenta.lineas.length) {
     const historial = leer("cuentas-cerradas", []);
-    historial.push({ ...cuenta, cerrada: Date.now() });
+    historial.push({ ...cuenta, lineas: lineasConPrecios(), cerrada: Date.now() });
     guardar("cuentas-cerradas", historial);
   }
   cuenta = null; guardar("cuenta-abierta", null);
@@ -531,12 +539,14 @@ function florDeLinea(l) {
   const n = raiz(l.articulo || "");
   return n ? catalogo.find((x) => raiz(x.nombre) === n || (x.alias || []).some((a) => raiz(a) === n)) : null;
 }
-function lineasConPrecios() {
-  return cuenta.lineas.map((l) => {
+function conPrecios(ls) {
+  return ls.map((l) => {
     const f = florDeLinea(l);
-    return { ...l, precioMin: f?.precioMin ?? l.precioMin ?? null, precioMax: f?.precioMax ?? l.precioMax ?? null };
+    const p = f?.precio ?? l.precioMin ?? null; // catálogo primero; si la flor ya no existe, lo que se congeló
+    return { ...l, precioMin: p, precioMax: p };
   });
 }
+const lineasConPrecios = () => conPrecios(cuenta.lineas);
 function pintarCuenta() {
   document.getElementById("cuenta-titulo").innerHTML = `<span class="tipo" onclick="event.stopPropagation();cambiarTipo()">${esc(nombreTrabajo(cuenta))}</span> · ${cuenta.presupuesto ? `${cuenta.presupuesto} €` : "sin presupuesto"} <span class="editar">✎</span>`;
   const lineas = lineasConPrecios();
@@ -545,17 +555,17 @@ function pintarCuenta() {
 
   // barra: siempre visible para que la cabecera no baile; sin presupuesto muestra solo el importe
   const relleno = document.getElementById("cuenta-barra-relleno");
-  const hayImporte = t.min > 0 || t.max > 0;
-  const rango = hayImporte ? `≈ ${Math.round(t.min)}–${Math.round(t.max)} €` : "";
+  const gastado = t.min;
   const sinPrecio = t.sinPrecio ? ` (+${t.sinPrecio} sin precio)` : "";
   if (cuenta.presupuesto) {
-    const medio = (t.min + t.max) / 2;
-    relleno.style.width = Math.min(100, (medio / cuenta.presupuesto) * 100) + "%";
-    relleno.classList.toggle("pasado", medio > cuenta.presupuesto);
-    document.getElementById("cuenta-barra-texto").textContent = (hayImporte ? `${rango} de ${cuenta.presupuesto} €` : `0 € de ${cuenta.presupuesto} €`) + sinPrecio;
+    relleno.style.width = Math.min(100, (gastado / cuenta.presupuesto) * 100) + "%";
+    relleno.classList.toggle("pasado", gastado > cuenta.presupuesto);
+    const resto = cuenta.presupuesto - gastado;
+    document.getElementById("cuenta-barra-texto").textContent =
+      `Llevas ${euros(gastado)} · ${resto >= 0 ? "te quedan " + euros(resto) : euros(-resto) + " de más"}` + sinPrecio;
   } else {
     relleno.style.width = "0";
-    document.getElementById("cuenta-barra-texto").textContent = hayImporte ? `Llevas ${rango}${sinPrecio} · sin presupuesto` : "Sin presupuesto · toca aquí para ponerlo";
+    document.getElementById("cuenta-barra-texto").textContent = gastado > 0 ? `Llevas ${euros(gastado)}${sinPrecio} · sin presupuesto` : "Sin presupuesto · toca aquí para ponerlo";
   }
   // resumen de lo que lleva
   document.getElementById("cuenta-resumen").innerHTML = lineas.length
@@ -585,7 +595,9 @@ function pintarCuenta() {
     const g = f.grupo || "mías";
     if (grupoCuenta === "todas" && !q && g !== ultimo) { html += `<div class="dia-cabecera">${g}</div>`; ultimo = g; }
     const n = enCuenta.get(f.id) || 0;
-    const precio = f.precioMin != null ? `${f.precioMin}–${f.precioMax ?? f.precioMin} €${f.unidad ? "/" + f.unidad : ""}` : `<span class="sinprecio" onclick="irAFlorId(${f.id})">sin precio</span>`;
+    const precio = f.precio != null
+      ? `${euros(f.precio)}${f.unidad ? "/" + f.unidad : ""}${f.aprox ? ` <span class="aprox" onclick="irAFlorId(${f.id})" title="precio puesto a ojo, tócalo para corregirlo">aprox.</span>` : ""}`
+      : `<span class="sinprecio" onclick="irAFlorId(${f.id})">sin precio</span>`;
     html += `<div class="sel-fila ${n ? "en" : ""}">
       <div class="sel-info"><div class="sel-nombre">${esc(f.nombre)}</div><div class="sel-precio">${precio}</div></div>
       <div class="stepper">
@@ -624,7 +636,7 @@ function sumarFlor(id, delta) {
   }
   if (!l) {
     if (delta <= 0) return;
-    l = { cantidad: 0, unidad: u, articulo: f.nombre, florId: id, precioMin: f.precioMin ?? null, precioMax: f.precioMax ?? null };
+    l = { cantidad: 0, unidad: u, articulo: f.nombre, florId: id };
     cuenta.lineas.push(l);
   }
   l.cantidad = (l.cantidad ?? 1) + delta;
@@ -641,7 +653,7 @@ function cantidadFlor(id) {
 }
 function anadirFlorDesdeCuenta() {
   const nombre = (document.getElementById("buscar-cuenta")?.value || "").toLowerCase().replace(/,/g, "").trim(); if (!nombre) return;
-  const f = { id: Date.now(), nombre, alias: [], grupo: "mías", precioMin: null, precioMax: null };
+  const f = { id: Date.now(), nombre, alias: [], grupo: "mías", precio: null };
   catalogo.push(f); guardar("catalogo", catalogo);
   document.getElementById("buscar-cuenta").value = ""; grupoCuenta = "todas";
   sumarFlor(f.id, 1);
@@ -665,7 +677,7 @@ function procesarFrase(frase) {
     const t = totalCuenta(lineasConPrecios());
     const msg = cuenta.lineas.length
       ? (t.min || t.max)
-        ? `Llevas ≈ ${Math.round(t.min)}–${Math.round(t.max)} €${cuenta.presupuesto ? ` de ${cuenta.presupuesto} €` : ""}${t.sinPrecio ? ` y ${t.sinPrecio} cosas sin precio` : ""}`
+        ? `Llevas ${euros(t.min)}${cuenta.presupuesto ? ` de ${cuenta.presupuesto} €` : ""}${t.sinPrecio ? ` y ${t.sinPrecio} cosas sin precio` : ""}`
         : `Llevas ${cuenta.lineas.length} cosas apuntadas (sin precios aún)`
       : "No llevas nada todavía";
     resp.textContent = msg; resp.classList.remove("oculto");
@@ -746,9 +758,9 @@ function pintarFlores() {
     if (grupoActivo === "todas" && !q && g !== ultimo) { html += `<div class="dia-cabecera">${g}</div>`; ultimo = g; }
     html += `<div class="flor-fila">
       <input class="nombre" value="${esc(f.nombre)}" onchange="catalogo[${i}].nombre=this.value.toLowerCase().trim();guardar('catalogo',catalogo)">
-      <input class="precio" inputmode="decimal" placeholder="de" value="${f.precioMin ?? ""}" onchange="catalogo[${i}].precioMin=num(this.value);guardar('catalogo',catalogo)">
-      <span class="guion">–</span>
-      <input class="precio" inputmode="decimal" placeholder="a" value="${f.precioMax ?? ""}" onchange="catalogo[${i}].precioMax=num(this.value);guardar('catalogo',catalogo)">
+      ${f.aprox && f.precio != null ? '<span class="aprox" title="precio puesto a ojo">aprox.</span>' : ""}
+      <input class="precio" inputmode="decimal" placeholder="€" value="${f.precio ?? ""}" onchange="catalogo[${i}].precio=num(this.value);catalogo[${i}].aprox=false;guardar('catalogo',catalogo);pintarFlores()">
+      <span class="unidad">€${f.unidad ? "/" + f.unidad : ""}</span>
       <button class="quitar" onclick="quitarFlor(${i})" aria-label="quitar ${esc(f.nombre)}">✕</button>
     </div>`;
   }
@@ -762,7 +774,7 @@ function anadirFlor() {
   const q = document.getElementById("buscar-flor")?.value.trim();
   const nombre = prompt("Nombre de la flor:", q || "");
   if (!nombre) return;
-  catalogo.push({ id: Date.now(), nombre: nombre.toLowerCase().trim(), alias: [], grupo: "mías", precioMin: null, precioMax: null });
+  catalogo.push({ id: Date.now(), nombre: nombre.toLowerCase().trim(), alias: [], grupo: "mías", precio: null });
   guardar("catalogo", catalogo);
   document.getElementById("buscar-flor").value = ""; grupoActivo = "todas";
   pintarFlores();
@@ -771,8 +783,9 @@ function anadirFlor() {
 /* ---------- versión y novedades ---------- */
 // Subir VERSION en cada despliegue y contar en NOVEDADES qué cambia, en las palabras de
 // Belén: es lo que verá en el aviso al abrir la app tras actualizarse.
-const VERSION = "2026-09-23.11";
+const VERSION = "2026-09-28.1";
 const NOVEDADES = {
+  "2026-09-28.1": "Un solo precio por flor, se acabó el \"de tanto a tanto\". Los que puse yo a ojo llevan la marca \"aprox.\" hasta que los cambies. Y arriba te dice directamente cuánto llevas y cuánto te queda.",
   "2026-09-23.11": "Al empezar un presupuesto puedes decir qué es (ramo, centro, corona…) y así lo verás en el histórico. \"Se tira algo\" ahora se llama \"Apuntar flor tirada\" y te enseña lo que va de mes. Icono nuevo en la pantalla de inicio.",
   "2026-09-23.10": "El botón morado ahora se llama Presupuesto. Una vez empezado, toca el título o la barra para cambiar de cuánto es.",
   "2026-09-23.9": "Calcular centro ahora es tocar: buscas la flor, le das a + y la barra de arriba te dice cuánto llevas. El dictado por voz queda apagado; si quieres probarlo, se enciende en Ajustes.",
