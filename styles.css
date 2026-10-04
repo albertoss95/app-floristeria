@@ -310,3 +310,7 @@ input:focus, textarea:focus, select:focus {
 .flor-fila .unidad { color: var(--tinta-suave); font-size: .85rem; font-weight: 600; min-width: 26px; }
 .flor-fila input.precio { width: 72px; }
 
+.ambar { background: linear-gradient(135deg, #c98a2e, var(--ambar)); }
+
+.aviso-actualizacion.flash { background: var(--verde-osc); text-align: left; font-weight: 600; line-height: 1.4; }
+

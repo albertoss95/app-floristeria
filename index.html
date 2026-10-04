@@ -82,6 +82,7 @@
   <header><button class="btn-icono" onclick="ir('pantalla-inicio')">←</button><h1>Encargo</h1></header>
   <div id="detalle-contenido"></div>
   <button class="btn-gigante verde" id="btn-hecho" onclick="marcarHecho()">✓ &nbsp;Ya está hecho</button>
+  <button class="btn-gigante ambar" id="btn-avisar" onclick="avisarEncargo(detalleId)">⏰ &nbsp;Avisarme en el móvil</button>
   <button class="btn-gigante azul" onclick="imprimirTarjeta()">🖨 &nbsp;Tarjeta</button>
   <button class="btn-plano" onclick="editarEncargo()">editar</button>
   <button class="btn-plano rojo" onclick="borrarEncargo()">borrar</button>
@@ -180,6 +181,7 @@
   <button data-p="pantalla-ajustes" onclick="ir('pantalla-ajustes')"><span>⚙</span>Ajustes</button>
 </nav>
 <div id="aviso-actualizacion" class="aviso-actualizacion oculto" onclick="location.reload()">Hay una versión nueva · toca para instalarla</div>
+<div id="aviso-flash" class="aviso-actualizacion flash oculto" onclick="this.classList.add('oculto')"></div>
 
 <script src="parser.js"></script>
 <script src="app.js"></script>

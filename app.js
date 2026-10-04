@@ -364,7 +364,7 @@ function tarjetaEncargo(e) {
   const f = faltas(e);
   const urgente = e.fecha && e.fecha <= hoyISO() && e.estado !== "hecho"; // hoy o atrasado
   return `<div class="tarjeta-encargo ${urgente ? "urgente" : ""} ${e.estado === "hecho" ? "hecho" : ""}" onclick="verEncargo(${e.id})">
-    <div class="titulo">${esc(e.que || "Encargo")}${e.importe ? " · " + esc(e.importe) + " €" : ""}${e.hora ? " · antes de las " + esc(e.hora) : ""}</div>
+    <div class="titulo">${e.avisado ? "⏰ " : ""}${esc(e.que || "Encargo")}${e.importe ? " · " + esc(e.importe) + " €" : ""}${e.hora ? " · antes de las " + esc(e.hora) : ""}</div>
     <div class="sub">${[e.entrega, e.quien, e.direccion].filter(Boolean).map(esc).join(" · ") || "&nbsp;"}</div>
     ${f.length ? `<div class="falta">⚠ Falta: ${f.join(" ")}</div>` : ""}
   </div>`;
@@ -426,16 +426,109 @@ function guardarEncargo() {
   };
   if (!e.que && !e.texto) { alert("Apunta al menos qué es."); return; }
   if (!e.que && e.texto) e.que = e.texto.slice(0, 40); // algo antes que nada
-  if (editandoId != null) {
+  const nuevo = editandoId == null;
+  if (!nuevo) {
     const i = encargos.findIndex((x) => x.id === editandoId);
-    e.estado = encargos[i].estado; e.creado = encargos[i].creado;
+    const antes = encargos[i];
+    e.estado = antes.estado; e.creado = antes.creado;
+    // el aviso puesto en el calendario sigue valiendo si no cambian fecha ni hora
+    if (antes.avisado && antes.fecha === e.fecha && antes.hora === e.hora) { e.avisado = antes.avisado; e.avisadoSeq = antes.avisadoSeq; }
+    else if (antes.avisado) { e.avisadoSeq = antes.avisadoSeq; e._alarmaVieja = true; } // cambió fecha/hora: la alarma del calendario ya no vale
     encargos[i] = e;
   } else encargos.push(e);
   guardar("encargos", encargos);
-  if (editandoId == null) guardar("borrador-encargo", null); // editar no toca el borrador del encargo nuevo
+  if (nuevo) guardar("borrador-encargo", null); // editar no toca el borrador del encargo nuevo
   editandoId = null;
+  // Belén pidió un aviso "como cuando te pones una alerta en el móvil" (audio 3/10).
+  // Se pregunta ANTES de cambiar de pantalla: si hay una actualización pendiente, ir() recarga.
+  let poner = false;
+  if (!e.avisado && !actualizacionPendiente && avisosPosibles(e).length) {
+    const previa = e._alarmaVieja ? " Borra antes la alarma anterior del calendario." : "";
+    poner = confirm(`¿Te pongo la alarma en el calendario del móvil para el ${fechaLarga(e.fecha).toLowerCase()}?${previa}`);
+  }
+  delete e._alarmaVieja;
   ir("pantalla-inicio");
+  if (poner) avisarEncargo(e.id);
 }
+
+/* ---------- AVISO EN EL CALENDARIO DEL MÓVIL ---------- */
+// Sin servidor no podemos despertar el móvil a una hora: la alarma la pone el calendario del
+// teléfono, que sí puede. Generamos un evento .ics y el móvil lo abre con su app de calendario.
+// Decisiones (revisión 4/10): el evento SIEMPRE tiene hora (Google Calendar no admite avisos
+// posteriores al inicio de un evento de día entero, y el aviso del mismo día es el que pidió);
+// los avisos van como duraciones relativas negativas, que Google y Apple entienden igual;
+// fechas en UTC para no depender de un VTIMEZONE.
+// [CONFIRMAR en los dos móviles]: Android/Chrome descarga el .ics y al abrirlo Google Calendar
+// ofrece guardarlo; iPhone/Safari (incl. Chrome iOS) abre el evento. iPad moderno cae en la
+// rama Android (descarga), que también vale.
+const MIN = 60000;
+function inicioEncargo(e) {
+  const [y, m, d] = e.fecha.split("-").map(Number);
+  if (e.hora) { const [hh, mm] = e.hora.split(":").map(Number); return new Date(y, m - 1, d, hh, mm); }
+  return new Date(y, m - 1, d, 8, 30); // sin hora tope: el evento es "a primera hora"
+}
+// Momentos de aviso que aún tienen sentido: víspera 19:00 y el mismo día a las 8:30 (o una hora
+// antes de la hora tope si esta es temprana). Si ninguno queda, uno de respaldo antes de la hora.
+function avisosPosibles(e) {
+  if (!e.fecha || e.estado === "hecho") return [];
+  const inicio = inicioEncargo(e), ahora = new Date();
+  const [y, m, d] = e.fecha.split("-").map(Number);
+  const vispera = new Date(y, m - 1, d - 1, 19, 0);
+  // con hora tope: 8:30 o una hora antes si es temprana; sin hora tope el evento ya es a las 8:30
+  const dia = e.hora ? new Date(Math.min(new Date(y, m - 1, d, 8, 30).getTime(), inicio.getTime() - 60 * MIN)) : inicio;
+  let avisos = [vispera, dia].filter((a) => a > ahora && a <= inicio);
+  if (!avisos.length) {
+    const respaldo = new Date(Math.max(ahora.getTime() + 2 * MIN, inicio.getTime() - 60 * MIN));
+    if (respaldo <= inicio) avisos = [respaldo];
+  }
+  return avisos;
+}
+// Pliega las líneas a 70 caracteres como pide el RFC 5545 (continuación = salto + espacio)
+function plegar(linea) {
+  const trozos = []; let s = linea;
+  while (s.length > 70) { trozos.push(s.slice(0, 70)); s = " " + s.slice(70); }
+  trozos.push(s); return trozos.join("\r\n");
+}
+function mostrarAviso(texto, ms = 6000) {
+  const b = document.getElementById("aviso-flash"); b.textContent = texto; b.classList.remove("oculto");
+  clearTimeout(b._t); b._t = setTimeout(() => b.classList.add("oculto"), ms);
+}
+function avisarEncargo(id) {
+  const e = encargos.find((x) => x.id === id); if (!e) return;
+  if (!e.fecha) { alert("Ponle fecha al encargo (editar) y te podré avisar."); return; }
+  const avisos = avisosPosibles(e);
+  if (!avisos.length) { alert("Ya ha pasado la hora de avisar para este encargo."); return; }
+  const inicio = inicioEncargo(e), ahora = new Date();
+  const utc = (dt) => dt.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const txt = (s) => String(s ?? "").replace(/\\/g, "\\\\").replace(/\r?\n/g, "\\n").replace(/[,;]/g, (c) => "\\" + c);
+  const dur = (a) => { const min = Math.round((inicio - a) / MIN); return min <= 0 ? "PT0M" : `-PT${min}M`; };
+
+  e.avisadoSeq = (e.avisadoSeq || 0) + 1; // mismo UID, SEQUENCE mayor: el calendario actualiza en vez de duplicar
+  const titulo = `Encargo: ${e.que}${e.importe ? " · " + e.importe + " €" : ""}${e.quien ? " · para " + e.quien : ""}`;
+  const detalle = [e.entrega, e.hora ? "Antes de las " + e.hora : "Sin hora tope", e.direccion ? "Dónde: " + e.direccion : "", e.quien ? "Para: " + e.quien : "",
+    e.cliente ? "Lo pide: " + e.cliente : "", e.dedicatoria ? "Tarjeta: " + e.dedicatoria : "", e.sorpresa ? "Sorpresa: " + e.sorpresa : ""].filter(Boolean).join("\n");
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//La Floristeria//ES", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+    "BEGIN:VEVENT", `UID:encargo-${e.id}@floristeria`, `SEQUENCE:${e.avisadoSeq}`, `DTSTAMP:${utc(ahora)}`, `LAST-MODIFIED:${utc(ahora)}`,
+    `DTSTART:${utc(inicio)}`, `DTEND:${utc(new Date(inicio.getTime() + 30 * MIN))}`,
+    `SUMMARY:${txt(titulo)}`, `DESCRIPTION:${txt(detalle)}`, e.direccion ? `LOCATION:${txt(e.direccion)}` : "",
+    ...avisos.flatMap((a) => ["BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${txt("Encargo: " + e.que)}`, `TRIGGER:${dur(a)}`, "END:VALARM"]),
+    "END:VEVENT", "END:VCALENDAR"].filter(Boolean).map(plegar).join("\r\n") + "\r\n";
+
+  const a = document.createElement("a");
+  const esIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
+  a.href = esIOS ? "data:text/calendar;charset=utf-8," + encodeURIComponent(ics) : URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" }));
+  a.download = `encargo-${e.fecha}.ics`;
+  document.body.appendChild(a); a.click(); a.remove();
+  if (!esIOS) setTimeout(() => URL.revokeObjectURL(a.href), 60 * MIN);
+
+  e.avisado = Date.now(); guardar("encargos", encargos);
+  const cuando = avisos.map((x) => `${DIAS[x.getDay()]} a las ${String(x.getHours()).padStart(2, "0")}:${String(x.getMinutes()).padStart(2, "0")}`).join(" y ");
+  mostrarAviso(`⏰ Alarma enviada al calendario (${cuando}). Abre la descarga y dale a Guardar: hasta entonces no suena.`, 9000);
+  const activa = document.querySelector(".pantalla.activa")?.id;
+  if (activa === "pantalla-detalle") verEncargo(e.id);
+  if (activa === "pantalla-inicio") pintarInicio(); // que salga el ⏰ en la tarjeta
+}
+
 
 /* ---------- DETALLE ---------- */
 function verEncargo(id) {
@@ -453,6 +546,9 @@ function verEncargo(id) {
     campos.filter(([, val]) => val).map(([k, val, cls]) => `<div class="detalle-campo"><div class="k">${k}</div><div class="v ${cls || ""}">${salto(val)}</div></div>`).join("") +
     (f.length ? `<div class="falta" style="padding:10px 0">⚠ Falta preguntar: ${f.join(" ")}</div>` : "");
   document.getElementById("btn-hecho").classList.toggle("oculto", e.estado === "hecho");
+  const btnAviso = document.getElementById("btn-avisar");
+  btnAviso.classList.toggle("oculto", !avisosPosibles(e).length);
+  btnAviso.innerHTML = e.avisado ? "⏰ &nbsp;Alarma enviada · volver a enviarla" : "⏰ &nbsp;Avisarme en el móvil";
   ir("pantalla-detalle");
 }
 function marcarHecho() {
@@ -793,8 +889,9 @@ function anadirFlor() {
 /* ---------- versión y novedades ---------- */
 // Subir VERSION en cada despliegue y contar en NOVEDADES qué cambia, en las palabras de
 // Belén: es lo que verá en el aviso al abrir la app tras actualizarse.
-const VERSION = "2026-09-28.1";
+const VERSION = "2026-10-04.1";
 const NOVEDADES = {
+  "2026-10-04.1": "Lo que pediste: en cada encargo hay un botón \"Avisarme en el móvil\" que manda la alarma al calendario del teléfono, normalmente la víspera a las 19:00 y el mismo día por la mañana. Al guardar un encargo con fecha te lo ofrece solo. Ojo: hay que darle a Guardar cuando se abra el calendario.",
   "2026-09-28.1": "Un solo precio por flor, se acabó el \"de tanto a tanto\". Los que puse yo a ojo llevan la marca \"aprox.\" hasta que los cambies. Y arriba te dice directamente cuánto llevas y cuánto te queda.",
   "2026-09-23.11": "Al empezar un presupuesto puedes decir qué es (ramo, centro, corona…) y así lo verás en el histórico. \"Se tira algo\" ahora se llama \"Apuntar flor tirada\" y te enseña lo que va de mes. Icono nuevo en la pantalla de inicio.",
   "2026-09-23.10": "El botón morado ahora se llama Presupuesto. Una vez empezado, toca el título o la barra para cambiar de cuánto es.",
