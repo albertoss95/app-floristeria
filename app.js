@@ -548,7 +548,7 @@ function verEncargo(id) {
   document.getElementById("btn-hecho").classList.toggle("oculto", e.estado === "hecho");
   const btnAviso = document.getElementById("btn-avisar");
   btnAviso.classList.toggle("oculto", !avisosPosibles(e).length);
-  btnAviso.innerHTML = e.avisado ? "⏰ &nbsp;Alarma enviada · volver a enviarla" : "⏰ &nbsp;Avisarme en el móvil";
+  btnAviso.innerHTML = e.avisado ? "⏰ &nbsp;Alarma enviada · reenviar" : "⏰ &nbsp;Avisarme en el móvil";
   ir("pantalla-detalle");
 }
 function marcarHecho() {
